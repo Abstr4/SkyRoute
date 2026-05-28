@@ -5,6 +5,7 @@
 ## Commands
 
 - `dotnet build` — build the solution
+- `dotnet test` — run all unit tests
 - `dotnet run` — run API on http://localhost:5133
 - Scalar API UI: http://localhost:5133/scalar/v1 (Development only)
 
@@ -21,9 +22,18 @@
 - `MockDataStore` has 6 hardcoded airports (Argentina/Brazil/Chile)
 - Providers have overlapping hardcoded flight IDs — IDs are not unique across providers
 
+## Testing
+
+- **Framework**: xUnit + Moq, in `src/SkyRoute.Test/SkyRoute.Test.csproj`
+- **Naming**: `MethodName_Scenario_ExpectedBehavior`
+- **Structure**: Arrange-Act-Assert (AAA), constructor for setup
+- **Mocking**: Moq for `IFlightProvider` and service dependencies
+- **Data-driven**: `[Theory]` / `[InlineData]` for parameterized tests
+- Test classes match the class under test (e.g., `FlightSearchServiceTests`)
+- Run with `dotnet test`
+
 ## Notes
 
-- No test project exists
 - Uses `Scalar.AspNetCore` (not Swagger) for OpenAPI
 - `SkyRoute.http` references `/weatherforecast/` — stale, remove before using
 - Controllers use inconsistent routing: `[Route("api/[controller]")]` (Flights) vs `[Route("[controller]")]` (Booking)
