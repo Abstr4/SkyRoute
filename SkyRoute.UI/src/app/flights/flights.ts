@@ -1,9 +1,11 @@
 import { Component, inject, ViewChild, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common';
+import { SelectionModel } from '@angular/cdk/collections';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 export interface Airport {
   code: string;
@@ -30,7 +32,7 @@ export interface FlightOffer {
 
 @Component({
   selector: 'app-flights',
-  imports: [MatTableModule, MatSortModule, MatButtonModule, DatePipe, CurrencyPipe],
+  imports: [MatTableModule, MatSortModule, MatButtonModule, MatCheckboxModule, DatePipe, CurrencyPipe],
   templateUrl: './flights.html',
   styleUrl: './flights.css',
 })
@@ -39,7 +41,10 @@ export class Flights implements AfterViewInit {
 
   @ViewChild(MatSort) sort!: MatSort;
 
+  readonly selection = new SelectionModel<FlightOffer>(false, []);
+
   readonly displayedColumns = [
+    'select',
     'provider',
     'flightNumber',
     'departureTime',
@@ -75,5 +80,9 @@ export class Flights implements AfterViewInit {
 
   goBack(): void {
     this.router.navigate(['/']);
+  }
+
+  continue(): void {
+    console.log('Selected flight:', this.selection.selected[0]);
   }
 }

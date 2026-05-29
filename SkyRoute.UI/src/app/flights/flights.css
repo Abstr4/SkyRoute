@@ -1,3 +1,7 @@
+.mat-column-select {
+  overflow: initial;
+}
+
 .price-per-person {
   color: #666;
   font-size: 0.85em;
@@ -5,4 +9,18 @@
 
 .mat-column-price {
   white-space: nowrap;
+}
+
+table {
+  width: 100%;
+}
+
+.continue-button {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+#continue-button {
+  width: 200px;
 }
