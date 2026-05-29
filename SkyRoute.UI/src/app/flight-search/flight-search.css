@@ -9,3 +9,13 @@ mat-form-field {
   margin-right: 8px;
   margin-bottom: 16px;
 }
+
+.search-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-spinner {
+  display: inline-block;
+}

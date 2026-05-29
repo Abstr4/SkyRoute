@@ -70,7 +70,12 @@
         </mat-select>
       </mat-form-field>
       <br />
-      <button matButton="filled" type="submit">Search Flights</button>
+      <div class="search-action">
+        <button matButton="filled" type="submit" [disabled]="loading()">Search Flights</button>
+        @if (loading()) {
+          <mat-spinner diameter="24" class="search-spinner" />
+        }
+      </div>
     </form>
   </mat-card-content>
 </mat-card>

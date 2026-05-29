@@ -1,0 +1,8 @@
+.price-per-person {
+  color: #666;
+  font-size: 0.85em;
+}
+
+.mat-column-price {
+  white-space: nowrap;
+}

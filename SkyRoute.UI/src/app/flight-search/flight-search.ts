@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,12 +7,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import {provideNativeDateAdapter} from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
 
 @Component({
   selector: 'app-flight-search',
   providers: [provideNativeDateAdapter()],
-  imports: [MatFormFieldModule, MatSelectModule, MatInputModule, FormsModule, MatDatepickerModule, ReactiveFormsModule, MatButtonModule, MatCard, MatCardContent, MatCardTitle, MatCardSubtitle, MatCardHeader],
+  imports: [MatFormFieldModule, MatSelectModule, MatInputModule, FormsModule, MatDatepickerModule, ReactiveFormsModule, MatButtonModule, MatProgressSpinnerModule, MatCard, MatCardContent, MatCardTitle, MatCardSubtitle, MatCardHeader],
   templateUrl: './flight-search.html',
   styleUrl: './flight-search.css',
 })
@@ -64,10 +66,14 @@ export class FlightSearchComponent {
   cabinClass: new FormControl('Economy', { nonNullable: true }),
   });
 
+  private readonly router = inject(Router);
+
+  readonly loading = signal(false);
+
   protected minDate = new Date();
 
   async onSearch(): Promise<void> {
-    if (this.searchForm.invalid) {
+    if (this.searchForm.invalid || this.loading()) {
       return;
     }
 
@@ -84,6 +90,8 @@ export class FlightSearchComponent {
       passengers: raw.passengers,
       cabinClass: this.cabinClassMap[raw.cabinClass],
     };
+
+    this.loading.set(true);
 
     try {
       const response = await fetch(
@@ -102,9 +110,11 @@ export class FlightSearchComponent {
       }
 
       const data = await response.json();
-      console.log('Search results:', data);
+      await this.router.navigate(['/flights'], { state: { results: data } });
     } catch (error) {
       console.error('Network error:', error);
+    } finally {
+      this.loading.set(false);
     }
   }
 
