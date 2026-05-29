@@ -31,6 +31,12 @@ export class FlightSearchComponent {
 
   readonly cabinClasses = ['Economy', 'Business', 'First Class'];
 
+  private readonly cabinClassMap: Record<string, string> = {
+    'Economy': 'Economy',
+    'Business': 'Business',
+    'First Class': 'FirstClass',
+  };
+
   readonly searchForm = new FormGroup({
   originAirportCode: new FormControl('', { 
     nonNullable: true,
@@ -60,8 +66,46 @@ export class FlightSearchComponent {
 
   protected minDate = new Date();
 
-  onSearch(): void {
-    console.log('Search submitted with values:', this.searchForm.value);
+  async onSearch(): Promise<void> {
+    if (this.searchForm.invalid) {
+      return;
+    }
+
+    const raw = this.searchForm.getRawValue();
+    const date = new Date(raw.departureDate);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    const body = {
+      originAirportCode: raw.originAirportCode,
+      destinationAirportCode: raw.destinationAirportCode,
+      departureDate: `${year}-${month}-${day}`,
+      passengers: raw.passengers,
+      cabinClass: this.cabinClassMap[raw.cabinClass],
+    };
+
+    try {
+      const response = await fetch(
+        'https://localhost:7229/api/Flights/search',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Search failed:', response.status, errorText);
+        return;
+      }
+
+      const data = await response.json();
+      console.log('Search results:', data);
+    } catch (error) {
+      console.error('Network error:', error);
+    }
   }
 
   private todayOrFutureValidator(): ValidatorFn {
