@@ -1,6 +1,69 @@
 @SkyRoute_HostAddress = http://localhost:5133
 
-GET {{SkyRoute_HostAddress}}/weatherforecast/
-Accept: application/json
+### Search flights
+POST {{SkyRoute_HostAddress}}/api/flights/search
+Content-Type: application/json
+
+{
+  "originAirport": "EZE",
+  "destinationAirport": "GRU",
+  "departureDate": "2026-06-15",
+  "cabinClass": "Economy",
+  "passengers": 1
+}
+###
+
+### Search flight 2
+POST {{SkyRoute_HostAddress}}/api/flights/search
+Content-Type: application/json
+{
+  "originAirportCode": "EZE",
+  "destinationAirportCode": "GRU",
+  "departureDate": "2026-06-15",
+  "passengers": "1",
+  "cabinClass": "Economy"
+}
+###
+
+### Search flight 3
+POST {{SkyRoute_HostAddress}}/api/flights/search
+Content-Type: application/json
+{
+  "originAirportCode": "EZE",
+  "destinationAirportCode": "EZE",
+  "departureDate": "2026-01-01",
+  "passengers": "1",
+  "cabinClass": "Economy"
+}
+###
+
+### Search flight 3
+POST {{SkyRoute_HostAddress}}/api/flights/search
+Content-Type: application/json
+{
+  "originAirportCode": "EZE",
+  "destinationAirportCode": "COR",
+  "departureDate": "2026-06-20",
+  "passengers": "1",
+  "cabinClass": "Economy"
+}
+###
+
+### Book a flight
+POST {{SkyRoute_HostAddress}}/booking
+Content-Type: application/json
+
+{
+  "provider": "BudgetWings",
+  "flightNumber": "BW101",
+  "passengers": [
+    {
+      "fullName": "john",
+      "email": "john@doe.com",
+      "documentType": "Passport",
+      "documentNumber": "123841823"
+    }
+  ]
+}
 
 ###

@@ -16,11 +16,21 @@
 
 ## Architecture
 
+- **4-layer Clean Architecture**: `SkyRoute.Domain` → `SkyRoute.Application` → `SkyRoute.Infrastructure` → `SkyRoute.API`
+- **Interface/implementation separation**: services and repositories have interfaces (`IFlightSearchService`, `IBookingService`, `IFlightOfferRepository`, `IAirportRepository`), enabling unit testing with mocks
 - **Provider pattern**: `IFlightProvider` implemented by `BudgetWingsProvider` + `GlobalAirProvider`, both registered as scoped services
 - `FlightSearchService` aggregates `IEnumerable<IFlightProvider>` — adding a new provider requires registering it in `Program.cs`
 - `FlightOfferRepository` is singleton; stores offers in-memory between search and booking (no DB)
+- `AirportRepository` wraps `MockDataStore` behind `IAirportRepository` — `BookingService` never references static data directly
 - `MockDataStore` has 6 hardcoded airports (Argentina/Brazil/Chile)
 - Providers have overlapping hardcoded flight IDs — IDs are not unique across providers
+
+## Layer dependencies
+
+- `SkyRoute.Domain` — no project dependencies (models, enums)
+- `SkyRoute.Application` — depends on `SkyRoute.Domain` (interfaces, services, contracts, DTOs)
+- `SkyRoute.Infrastructure` — depends on `SkyRoute.Application` (implements interfaces)
+- `SkyRoute.API` — depends on `SkyRoute.Application` + `SkyRoute.Infrastructure` (composition root)
 
 ## Testing
 
@@ -35,5 +45,4 @@
 ## Notes
 
 - Uses `Scalar.AspNetCore` (not Swagger) for OpenAPI
-- `SkyRoute.http` references `/weatherforecast/` — stale, remove before using
-- Controllers use inconsistent routing: `[Route("api/[controller]")]` (Flights) vs `[Route("[controller]")]` (Booking)
+- `SkyRoute.http` has sample search + booking requests

@@ -1,104 +1,100 @@
 using Microsoft.AspNetCore.Mvc;
-using SkyRoute.API.Contracts.Requests;
-using SkyRoute.API.Contracts.Responses;
+using Moq;
+using SkyRoute.Application.Contracts.Requests;
+using SkyRoute.Application.Contracts.Responses;
+using SkyRoute.Application.Interfaces;
 using SkyRoute.API.Controllers;
-using SkyRoute.API.Data;
-using SkyRoute.API.DTOs;
-using SkyRoute.API.Models;
-using SkyRoute.API.Services;
+using SkyRoute.Domain.Models;
 
 namespace SkyRoute.Test.Controllers;
 
 [Trait("Category", "Unit")]
 public sealed class BookingControllerTests
 {
-    private readonly FlightOfferRepository _repository;
+    private readonly Mock<IBookingService> _bookingServiceMock;
     private readonly BookingController _controller;
 
     public BookingControllerTests()
     {
-        _repository = new FlightOfferRepository();
-        var bookingService = new BookingService(_repository);
-        _controller = new BookingController(bookingService);
+        _bookingServiceMock = new Mock<IBookingService>();
+        _controller = new BookingController(_bookingServiceMock.Object);
     }
 
     [Fact]
     public void CreateBooking_ValidDomesticRequest_Returns201WithReferenceCode()
     {
-        var offer = CreateOffer(1, "EZE", "COR", CabinClass.Economy);
-        _repository.StoreOffer(offer);
-        var request = new CreateBookingRequest(1, new List<CreatePassengerRequest>
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
         });
+        var booking = new Booking
+        {
+            Id = 1,
+            ReferenceCode = "SKY-ABC123",
+            CreatedAtUtc = DateTime.UtcNow,
+            ProviderName = "BudgetWings",
+            FlightNumber = "BW101",
+            OriginAirportCode = "EZE",
+            DestinationAirportCode = "COR",
+            DepartureTime = DateTime.UtcNow,
+            ArrivalTime = DateTime.UtcNow,
+            CabinClass = CabinClass.Economy,
+            Passengers = [],
+            PricePerPassenger = 100m,
+            TotalPrice = 100m,
+        };
+        _bookingServiceMock.Setup(s => s.ConfirmBooking(request)).Returns(booking);
 
         var result = _controller.CreateBooking(request);
 
         var createdResult = Assert.IsType<CreatedAtActionResult>(result);
         Assert.Equal(201, createdResult.StatusCode);
         var response = Assert.IsType<CreateBookingResponse>(createdResult.Value);
-        Assert.StartsWith("SKY-", response.BookingReferenceCode);
-    }
-
-    private static string ExtractErrorMessage(IActionResult result)
-    {
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        var errorProperty = badRequest.Value!.GetType().GetProperty("error");
-        Assert.NotNull(errorProperty);
-        return (errorProperty.GetValue(badRequest.Value) as string)!;
+        Assert.Equal("SKY-ABC123", response.BookingReferenceCode);
     }
 
     [Fact]
     public void CreateBooking_FlightNotFound_Returns400WithError()
     {
-        var request = new CreateBookingRequest(999, []);
+        var request = new CreateBookingRequest("BudgetWings", "BW101", []);
+        _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
+            .Throws(new ArgumentException("Flight BW101 from BudgetWings is no longer available."));
 
         var result = _controller.CreateBooking(request);
 
-        var error = ExtractErrorMessage(result);
-        Assert.Contains("999", error);
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Contains("no longer available", badRequest.Value!.ToString());
     }
 
     [Fact]
     public void CreateBooking_InternationalRouteWithNationalId_Returns400WithError()
     {
-        var offer = CreateOffer(1, "EZE", "GRU", CabinClass.Economy);
-        _repository.StoreOffer(offer);
-        var request = new CreateBookingRequest(1, new List<CreatePassengerRequest>
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("Jane Doe", "jane@test.com", DocumentType.NationalId, "12345678"),
         });
+        _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
+            .Throws(new InvalidOperationException("must provide a Passport Number"));
 
         var result = _controller.CreateBooking(request);
 
-        var error = ExtractErrorMessage(result);
-        Assert.Contains("Passport", error);
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Contains("Passport", badRequest.Value!.ToString());
     }
 
-    private static FlightOffer CreateOffer(int id, string originCode, string destCode, CabinClass cabin)
+    [Fact]
+    public void CreateBooking_UnexpectedException_Returns500()
     {
-        var origin = MockDataStore.Airports.First(a => a.Code == originCode);
-        var dest = MockDataStore.Airports.First(a => a.Code == destCode);
-
-        return new FlightOffer
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
-            Id = id,
-            FlightNumber = "BW101",
-            Provider = "BudgetWings",
-            OriginAirport = new AirportDto
-            {
-                Code = origin.Code, Name = origin.Name, City = origin.City,
-                Country = origin.Country, CountryCode = origin.CountryCode,
-            },
-            DestinationAirport = new AirportDto
-            {
-                Code = dest.Code, Name = dest.Name, City = dest.City,
-                Country = dest.Country, CountryCode = dest.CountryCode,
-            },
-            DepartureTime = DateTime.UtcNow.AddDays(1),
-            ArrivalTime = DateTime.UtcNow.AddDays(1).AddHours(3),
-            CabinClass = cabin,
-            PricePerPassenger = 100m,
-        };
+            new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
+        });
+        _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
+            .Throws(new Exception("unexpected"));
+
+        var result = _controller.CreateBooking(request);
+
+        var statusResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, statusResult.StatusCode);
     }
 }

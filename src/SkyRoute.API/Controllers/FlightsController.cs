@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SkyRoute.API.Contracts.Requests;
-using SkyRoute.API.Services;
+using SkyRoute.Application.Contracts.Requests;
+using SkyRoute.Application.Interfaces;
 
 namespace SkyRoute.API.Controllers
 {
@@ -8,9 +8,9 @@ namespace SkyRoute.API.Controllers
     [Route("api/[controller]")]
     public sealed class FlightsController : ControllerBase
     {
-        private readonly FlightSearchService _flightSearchService;
+        private readonly IFlightSearchService _flightSearchService;
 
-        public FlightsController(FlightSearchService flightSearchService)
+        public FlightsController(IFlightSearchService flightSearchService)
         {
             _flightSearchService = flightSearchService;
         }

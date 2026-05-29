@@ -1,22 +1,26 @@
+using System.Text.Json.Serialization;
 using Scalar.AspNetCore;
-using SkyRoute.API.Services;
-using SkyRoute.API.Providers;
+using SkyRoute.Application.Interfaces;
+using SkyRoute.Application.Services;
+using SkyRoute.Infrastructure.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddOpenApi();
 
 // Individual providers so the IEnumerable<IFlightProvider> collection populates
 builder.Services.AddScoped<IFlightProvider, BudgetWingsProvider>();
 builder.Services.AddScoped<IFlightProvider, GlobalAirProvider>();
 
-// Flight offer repository (singleton to persist offers across requests during booking)
-builder.Services.AddSingleton<FlightOfferRepository>();
-
-builder.Services.AddScoped<FlightSearchService>();
-builder.Services.AddScoped<BookingService>();
+// Application — services
+builder.Services.AddScoped<IFlightSearchService, FlightSearchService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 var app = builder.Build();
 

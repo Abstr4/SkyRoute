@@ -1,17 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
-using SkyRoute.API.Contracts.Requests;
-using SkyRoute.API.Contracts.Responses;
-using SkyRoute.API.Services;
+using SkyRoute.Application.Contracts.Requests;
+using SkyRoute.Application.Contracts.Responses;
+using SkyRoute.Application.Interfaces;
 
 namespace SkyRoute.API.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class BookingController : ControllerBase
 {
-    private readonly BookingService _bookingService;
+    private readonly IBookingService _bookingService;
 
-    public BookingController(BookingService bookingService)
+    public BookingController(IBookingService bookingService)
     {
         _bookingService = bookingService;
     }
@@ -43,7 +43,7 @@ public class BookingController : ControllerBase
             // Document type validation failed
             return BadRequest(new { error = ex.Message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return StatusCode(StatusCodes.Status500InternalServerError, 
                 new { error = "An unexpected error occurred while processing your booking request." });

@@ -1,38 +1,42 @@
-using SkyRoute.API.Contracts.Requests;
-using SkyRoute.API.Data;
-using SkyRoute.API.DTOs;
-using SkyRoute.API.Models;
-using SkyRoute.API.Services;
+using Moq;
+using SkyRoute.Application.Contracts.Requests;
+using SkyRoute.Application.DTOs;
+using SkyRoute.Application.Interfaces;
+using SkyRoute.Application.Services;
+using SkyRoute.Domain.Models;
+using SkyRoute.Infrastructure.Data;
 
 namespace SkyRoute.Test.Services;
 
 [Trait("Category", "Unit")]
 public sealed class BookingServiceTests
 {
-    private readonly FlightOfferRepository _repository;
+    private readonly Mock<IFlightProvider> _providerMock;
     private readonly BookingService _service;
 
     public BookingServiceTests()
     {
-        _repository = new FlightOfferRepository();
-        _service = new BookingService(_repository);
+        _providerMock = new Mock<IFlightProvider>();
+        _providerMock.Setup(p => p.ProviderName).Returns("BudgetWings");
+
+        _service = new BookingService([_providerMock.Object]);
     }
 
     [Fact]
-    public void ConfirmBooking_UnknownFlightOffer_ThrowsArgumentException()
+    public void ConfirmBooking_UnknownFlight_ThrowsArgumentException()
     {
-        var request = new CreateBookingRequest(999, []);
+        var request = new CreateBookingRequest("BudgetWings", "UNKNOWN", []);
 
         var ex = Assert.Throws<ArgumentException>(() => _service.ConfirmBooking(request));
-        Assert.Contains("999", ex.Message);
+        Assert.Contains("UNKNOWN", ex.Message);
     }
 
     [Fact]
     public void ConfirmBooking_DomesticRoute_NationalIdRequired_Succeeds()
     {
-        var offer = CreateOffer(1, "EZE", "COR");
-        _repository.StoreOffer(offer);
-        var request = new CreateBookingRequest(1, new List<CreatePassengerRequest>
+        var offer = CreateOffer("EZE", "COR");
+        _providerMock.Setup(p => p.GetByFlightNumber("BW101")).Returns(offer);
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
         });
@@ -47,9 +51,9 @@ public sealed class BookingServiceTests
     [Fact]
     public void ConfirmBooking_InternationalRoute_PassportRequired_Succeeds()
     {
-        var offer = CreateOffer(1, "EZE", "GRU");
-        _repository.StoreOffer(offer);
-        var request = new CreateBookingRequest(1, new List<CreatePassengerRequest>
+        var offer = CreateOffer("EZE", "GRU");
+        _providerMock.Setup(p => p.GetByFlightNumber("BW101")).Returns(offer);
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("Jane Doe", "jane@test.com", DocumentType.Passport, "AB123456"),
         });
@@ -63,9 +67,9 @@ public sealed class BookingServiceTests
     [Fact]
     public void ConfirmBooking_InternationalRouteWithNationalId_ThrowsInvalidOperation()
     {
-        var offer = CreateOffer(1, "EZE", "GRU");
-        _repository.StoreOffer(offer);
-        var request = new CreateBookingRequest(1, new List<CreatePassengerRequest>
+        var offer = CreateOffer("EZE", "GRU");
+        _providerMock.Setup(p => p.GetByFlightNumber("BW101")).Returns(offer);
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("Jane Doe", "jane@test.com", DocumentType.NationalId, "12345678"),
         });
@@ -77,9 +81,9 @@ public sealed class BookingServiceTests
     [Fact]
     public void ConfirmBooking_DomesticRouteWithPassport_ThrowsInvalidOperation()
     {
-        var offer = CreateOffer(1, "EZE", "COR");
-        _repository.StoreOffer(offer);
-        var request = new CreateBookingRequest(1, new List<CreatePassengerRequest>
+        var offer = CreateOffer("EZE", "COR");
+        _providerMock.Setup(p => p.GetByFlightNumber("BW101")).Returns(offer);
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("John Doe", "john@test.com", DocumentType.Passport, "AB123456"),
         });
@@ -91,9 +95,9 @@ public sealed class BookingServiceTests
     [Fact]
     public void ConfirmBooking_ValidRequest_SetsCorrectPricing()
     {
-        var offer = CreateOffer(1, "EZE", "COR", 150m);
-        _repository.StoreOffer(offer);
-        var request = new CreateBookingRequest(1, new List<CreatePassengerRequest>
+        var offer = CreateOffer("EZE", "COR", 150m);
+        _providerMock.Setup(p => p.GetByFlightNumber("BW101")).Returns(offer);
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
             new("Jane Doe", "jane@test.com", DocumentType.NationalId, "87654321"),
@@ -108,9 +112,9 @@ public sealed class BookingServiceTests
     [Fact]
     public void ConfirmBooking_ValidRequest_SetsFlightSnapshotFields()
     {
-        var offer = CreateOffer(1, "EZE", "COR", 100m);
-        _repository.StoreOffer(offer);
-        var request = new CreateBookingRequest(1, new List<CreatePassengerRequest>
+        var offer = CreateOffer("EZE", "COR", 100m);
+        _providerMock.Setup(p => p.GetByFlightNumber("BW101")).Returns(offer);
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
         });
@@ -129,9 +133,9 @@ public sealed class BookingServiceTests
     [InlineData("EZE", "GRU", DocumentType.Passport)]
     public void ConfirmBooking_ValidRouteAndDocument_Succeeds(string origin, string dest, DocumentType docType)
     {
-        var offer = CreateOffer(1, origin, dest);
-        _repository.StoreOffer(offer);
-        var request = new CreateBookingRequest(1, new List<CreatePassengerRequest>
+        var offer = CreateOffer(origin, dest);
+        _providerMock.Setup(p => p.GetByFlightNumber("BW101")).Returns(offer);
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("Test Passenger", "test@test.com", docType, "12345678"),
         });
@@ -142,14 +146,13 @@ public sealed class BookingServiceTests
         Assert.NotEmpty(booking.ReferenceCode);
     }
 
-    private static FlightOffer CreateOffer(int id, string originCode, string destCode, decimal price = 100m)
+    private static FlightOffer CreateOffer(string originCode, string destCode, decimal price = 100m)
     {
         var origin = MockDataStore.Airports.First(a => a.Code == originCode);
         var dest = MockDataStore.Airports.First(a => a.Code == destCode);
 
         return new FlightOffer
         {
-            Id = id,
             FlightNumber = "BW101",
             Provider = "BudgetWings",
             OriginAirport = new AirportDto

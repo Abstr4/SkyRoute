@@ -1,9 +1,9 @@
 using Moq;
-using SkyRoute.API.Contracts.Requests;
-using SkyRoute.API.DTOs;
-using SkyRoute.API.Models;
-using SkyRoute.API.Providers;
-using SkyRoute.API.Services;
+using SkyRoute.Application.Contracts.Requests;
+using SkyRoute.Application.DTOs;
+using SkyRoute.Application.Interfaces;
+using SkyRoute.Application.Services;
+using SkyRoute.Domain.Models;
 
 namespace SkyRoute.Test.Services;
 
@@ -12,7 +12,6 @@ public sealed class FlightSearchServiceTests
 {
     private readonly Mock<IFlightProvider> _provider1;
     private readonly Mock<IFlightProvider> _provider2;
-    private readonly FlightOfferRepository _repository;
     private readonly FlightSearchService _service;
 
     public FlightSearchServiceTests()
@@ -23,16 +22,15 @@ public sealed class FlightSearchServiceTests
         _provider1.Setup(p => p.Search(It.IsAny<FlightSearchRequest>())).Returns([]);
         _provider2.Setup(p => p.Search(It.IsAny<FlightSearchRequest>())).Returns([]);
 
-        _repository = new FlightOfferRepository();
-        _service = new FlightSearchService([_provider1.Object, _provider2.Object], _repository);
+        _service = new FlightSearchService([_provider1.Object, _provider2.Object]);
     }
 
     [Fact]
     public void Search_MultipleProviders_AggregatesAllOffers()
     {
         var request = CreateValidRequest();
-        _provider1.Setup(p => p.Search(request)).Returns([CreateOffer(1, "BW101", "BudgetWings")]);
-        _provider2.Setup(p => p.Search(request)).Returns([CreateOffer(2, "GA102", "GlobalAir")]);
+        _provider1.Setup(p => p.Search(request)).Returns([CreateOffer("BW101", "BudgetWings")]);
+        _provider2.Setup(p => p.Search(request)).Returns([CreateOffer("GA102", "GlobalAir")]);
 
         var results = _service.Search(request);
 
@@ -45,7 +43,7 @@ public sealed class FlightSearchServiceTests
     public void Search_ValidRequest_CalculatesTotalPrice()
     {
         var request = CreateValidRequest(passengers: 3);
-        _provider1.Setup(p => p.Search(request)).Returns([CreateOffer(1, "BW101", "BudgetWings", 100m)]);
+        _provider1.Setup(p => p.Search(request)).Returns([CreateOffer("BW101", "BudgetWings", 100m)]);
 
         var results = _service.Search(request);
 
@@ -55,23 +53,9 @@ public sealed class FlightSearchServiceTests
     }
 
     [Fact]
-    public void Search_ValidRequest_StoresOffersInRepository()
-    {
-        var request = CreateValidRequest();
-        var offer = CreateOffer(1, "BW101", "BudgetWings");
-        _provider1.Setup(p => p.Search(request)).Returns([offer]);
-
-        _service.Search(request);
-
-        var stored = _repository.GetOfferById(1);
-        Assert.NotNull(stored);
-        Assert.Equal("BW101", stored.FlightNumber);
-    }
-
-    [Fact]
     public void Search_NoProviders_ReturnsEmptyList()
     {
-        var emptyService = new FlightSearchService([], _repository);
+        var emptyService = new FlightSearchService([]);
         var request = CreateValidRequest();
 
         var results = emptyService.Search(request);
@@ -84,7 +68,7 @@ public sealed class FlightSearchServiceTests
     {
         var request = CreateValidRequest();
         _provider1.Setup(p => p.Search(request)).Returns([]);
-        _provider2.Setup(p => p.Search(request)).Returns([CreateOffer(1, "GA102", "GlobalAir")]);
+        _provider2.Setup(p => p.Search(request)).Returns([CreateOffer("GA102", "GlobalAir")]);
 
         var results = _service.Search(request);
 
@@ -100,7 +84,6 @@ public sealed class FlightSearchServiceTests
         var arrive = depart.AddHours(4).AddMinutes(30);
         var offer = new FlightOffer
         {
-            Id = 1,
             FlightNumber = "BW101",
             Provider = "BudgetWings",
             OriginAirport = new AirportDto
@@ -133,11 +116,10 @@ public sealed class FlightSearchServiceTests
             CabinClass.Economy);
     }
 
-    private static FlightOffer CreateOffer(int id, string flightNumber, string provider, decimal price = 100m)
+    private static FlightOffer CreateOffer(string flightNumber, string provider, decimal price = 100m)
     {
         return new FlightOffer
         {
-            Id = id,
             FlightNumber = flightNumber,
             Provider = provider,
             OriginAirport = new AirportDto
