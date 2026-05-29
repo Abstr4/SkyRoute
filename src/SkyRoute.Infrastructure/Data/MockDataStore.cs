@@ -259,6 +259,42 @@ public static class MockDataStore
                 CabinClass = CabinClass.Economy,
                 BaseFare = 220.00m,
             },
+            new Flight
+            {
+                Id = 8,
+                Provider = "GlobalAir",
+                FlightNumber = "GA900",
+                OriginAirport = a.First(x => x.Code == "COR"),
+                DestinationAirport = a.First(x => x.Code == "MDZ"),
+                DepartureTime = DateTime.UtcNow.Date.AddHours(15).AddMinutes(30),
+                ArrivalTime = DateTime.UtcNow.Date.AddHours(16).AddMinutes(45),
+                CabinClass = CabinClass.Economy,
+                BaseFare = 45.00m,
+            },
+            new Flight
+            {
+                Id = 9,
+                Provider = "GlobalAir",
+                FlightNumber = "GA901",
+                OriginAirport = a.First(x => x.Code == "COR"),
+                DestinationAirport = a.First(x => x.Code == "MDZ"),
+                DepartureTime = DateTime.UtcNow.Date.AddHours(15).AddMinutes(30),
+                ArrivalTime = DateTime.UtcNow.Date.AddHours(16).AddMinutes(45),
+                CabinClass = CabinClass.Economy,
+                BaseFare = 45.00m,
+            },
+            new Flight
+            {
+                Id = 10,
+                Provider = "GlobalAir",
+                FlightNumber = "GA902",
+                OriginAirport = a.First(x => x.Code == "COR"),
+                DestinationAirport = a.First(x => x.Code == "MDZ"),
+                DepartureTime = DateTime.UtcNow.Date.AddHours(15).AddMinutes(30),
+                ArrivalTime = DateTime.UtcNow.Date.AddHours(16).AddMinutes(45),
+                CabinClass = CabinClass.Economy,
+                BaseFare = 45.00m,
+            },
         ];
     }
 }
