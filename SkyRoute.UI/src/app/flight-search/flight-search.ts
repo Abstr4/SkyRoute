@@ -78,6 +78,11 @@ export class FlightSearchComponent {
     }
 
     const raw = this.searchForm.getRawValue();
+
+    if (raw.originAirportCode === raw.destinationAirportCode) {
+      return;
+    }
+
     const date = new Date(raw.departureDate);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
