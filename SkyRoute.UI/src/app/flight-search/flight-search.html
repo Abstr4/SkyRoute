@@ -1,0 +1,76 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>SkyRoute</mat-card-title>
+    <mat-card-subtitle>Your Ultimate Flight Route Finder</mat-card-subtitle>
+  </mat-card-header>
+  <br/>
+  <mat-card-content>
+    <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="flight-search-form">
+      <mat-form-field class="origin-airport-field">
+        <mat-label>Origin Airport</mat-label>
+        <mat-select formControlName="originAirportCode">
+          @for (airport of airports; track airport.code) {
+            <mat-option [value]="airport.code">{{ airport.code }} - {{ airport.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="destination-airport-field">
+        <mat-label>Destination Airport</mat-label>
+        <mat-select formControlName="destinationAirportCode">
+          @for (airport of airports; track airport.code) {
+            <mat-option [value]="airport.code">{{ airport.code }} - {{ airport.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <br/>
+      <mat-form-field class="departure-date-field">
+        <mat-label>Departure Date</mat-label>
+        <input
+          matInput
+          [min]="minDate"
+          [matDatepicker]="picker"
+          placeholder="MM/DD/YYYY"
+          formControlName="departureDate"
+        />
+        <mat-hint>MM/DD/YYYY</mat-hint>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        @if (searchForm.controls.departureDate.hasError('required')) {
+          <mat-error> Departure date is required </mat-error>
+        }
+
+        @if (searchForm.controls.departureDate.hasError('pastDate')) {
+          <mat-error> Departure date cannot be in the past </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="passengers-field" hintLabel="Max 9 passengers">
+        <mat-label>Passengers</mat-label>
+        <input
+          matInput
+          placeholder="1-9"
+          value="1"
+          type="number"
+          formControlName="passengers"
+          [min]="1"
+          [max]="9"
+        />
+        @if (searchForm.controls.passengers.hasError('min')) {
+          <mat-error> Minimum 1 passenger </mat-error>
+        }
+        @if (searchForm.controls.passengers.hasError('max')) {
+          <mat-error> Maximum 9 passengers </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="cabin-class-field">
+        <mat-label>Cabin Class</mat-label>
+        <mat-select formControlName="cabinClass">
+          @for (cabinClass of cabinClasses; track cabinClass) {
+            <mat-option [value]="cabinClass">{{ cabinClass }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <br />
+      <button matButton="filled" type="submit">Search Flights</button>
+    </form>
+  </mat-card-content>
+</mat-card>

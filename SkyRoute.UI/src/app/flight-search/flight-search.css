@@ -1,0 +1,11 @@
+.departure-date-field {
+  width: 50%;
+}
+mat-form-field mat-error {
+  width: 100%;
+}
+
+mat-form-field {
+  margin-right: 8px;
+  margin-bottom: 16px;
+}
