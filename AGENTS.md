@@ -33,7 +33,7 @@ Frontend: signals + `computed()`, `OnPush`, reactive forms, `inject()` not const
 
 | Method | Route | Notes |
 |--------|-------|-------|
-| POST | `/api/Flights/search` | **POST** despite spec saying GET; body: `FlightSearchRequest` |
+| GET | `/api/Flights` | Search flights (query: `FlightSearchRequest`) |
 | POST | `/api/Booking` | Not `/booking` — the `.http` file is wrong |
 | GET | `/scalar/v1` | Scalar API UI (not Swagger), dev only |
 

@@ -65,7 +65,7 @@ bun start
 The UI starts on `http://localhost:4200`. The CORS policy only allows this origin.
 
 > [!NOTE]
-> The frontend hardcodes the API URL to `https://localhost:7229` (the HTTPS port from the backend's `launchSettings.json`). If you change the backend port, update the URL in the frontend components.
+> The frontend hardcodes the API URL to `https://localhost:7229` (the HTTPS port from the backend's `launchSettings.json`). If you change the backend port, update the URL in the frontend services.
 
 ### Run tests
 
@@ -126,7 +126,7 @@ Flight IDs are not unique across providers (both start at 1). The `BookingServic
 
 ```
 App (router-outlet)
- ├── FlightSearchComponent    /   — search form, submits POST /api/Flights/search
+ ├── FlightSearchComponent    /   — search form, submits GET /api/Flights
  ├── Flights                  /flights   — results table with MatSort
  └── Booking                  /booking   — dynamic passenger forms, submits POST /api/Booking
 ```
@@ -146,22 +146,26 @@ Data flows between components exclusively through **Router state** (`router.getC
 
 | Method | Route | Description |
 |--------|-------|-------------|
-| `POST` | `/api/Flights/search` | Search available flights |
+| `GET` | `/api/Flights` | Search available flights |
 | `POST` | `/api/Booking` | Confirm a booking |
 | `GET` | `/scalar/v1` | Scalar API reference (dev only) |
 
-### `POST /api/Flights/search`
+### `GET /api/Flights`
 
-**Request body:**
+**Query parameters:**
 
-```json
-{
-  "originAirportCode": "EZE",
-  "destinationAirportCode": "GRU",
-  "departureDate": "2026-06-15",
-  "passengers": 2,
-  "cabinClass": "Economy"
-}
+| Parameter | Type | Example |
+|-----------|------|---------|
+| `originAirportCode` | `string` | `EZE` |
+| `destinationAirportCode` | `string` | `GRU` |
+| `departureDate` | `string` (ISO date) | `2026-06-15` |
+| `passengers` | `int` | `2` |
+| `cabinClass` | `string` | `Economy` |
+
+**Example request:**
+
+```
+GET /api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate=2026-06-15&passengers=2&cabinClass=Economy
 ```
 
 **Response:** `200 OK`
@@ -233,7 +237,9 @@ The `documentType` must be `Passport` for international routes and `NationalId` 
 │       ├── app.routes.ts                     # Route definitions
 │       ├── flight-search/                     # Search form page
 │       ├── flights/                           # Results table page
-│       └── booking/                           # Booking form page
+│       ├── booking/                           # Booking form page
+│       ├── models/                            # Shared interfaces, constants
+│       └── services/                          # API service classes
 │
 ├── specs/                             # Original challenge specification
 └── AGENTS.md                          # Agent instructions (this file)
@@ -245,11 +251,11 @@ The `documentType` must be `Passport` for international routes and `NationalId` 
 
 | Decision | Rationale |
 |----------|-----------|
-| **POST for flight search** (not GET) | The request body includes structured data (origin/destination/passengers/cabin class). POST avoids URL length limits and keeps the payload clean. The spec suggested GET, but the implementation uses POST. |
+| **GET with query params for flight search** | Search queries on a resource collection should be GET — idempotent, cacheable, bookmarkable. The five scalar parameters fit comfortably in a URL. The original implementation used POST but was changed to align with REST conventions and the spec. |
 | **Provider pattern (Strategy)** | `IFlightProvider` lets new airlines be added by implementing a single interface and registering in DI — zero changes to existing services or controllers. |
 | **4-layer Clean Architecture** | Separates domain logic (Domain), use cases (Application), infrastructure concerns (Infrastructure), and presentation (API). Enables unit testing with mocked dependencies. |
 | **Router state for data flow** | Avoids a state management library or shared service for this small app. Simple and sufficient for a linear 3-page flow — at the cost of state surviving only as long as the in-memory navigation history. |
-| **Direct `fetch()` instead of `HttpClient`** | Eliminates the need for `HttpClientModule` and `HttpInterceptor` setup. Keeps the frontend lean for a demo — but sacrifices centralized error handling, request logging, and auth headers. |
+| **`HttpClient` with `provideHttpClient(withFetch())`** | Uses Angular's standard HTTP client with the modern fetch-based adapter. Provides centralized error handling, typed responses, and integrates with RxJS via `Observable`. The `FlightSearchService` encapsulates all API calls, keeping components framework-aware but not HTTP-aware. |
 | **All DI in `Program.cs`** | Keeps the composition root explicit and visible in a single file. As the project grows, `DependencyInjection.cs` extension methods per layer would be cleaner. |
 | **Scalar over Swagger** | Scalar provides a more modern, readable API reference UI. Integrated via `Scalar.AspNetCore` with deep-space theme. |
 | **In-memory data store** | Zero setup, no database dependency. Adequate for a demo — but all data resets on server restart, and concurrent access uses no synchronization. |
@@ -265,7 +271,7 @@ The `documentType` must be `Passport` for international routes and `NationalId` 
 - **Backend state is ephemeral** — Bookings are stored in a private `List<Booking>` inside `BookingService` and are lost on restart.
 - **International check uses `Country` (string), not `CountryCode`** — The `BookingService` compares `originAirport.Country` vs `destinationAirport.Country`. This works for the current data but would fail if two countries shared the same name string across different codes.
 - **CORS restricted to `localhost:4200`** — The policy is hardcoded for the Angular dev server. Any other client must be added explicitly.
-- **Spec vs implementation** — The original spec defines `GET /api/flights/search` and `POST /api/bookings`; the implementation uses `POST /api/Flights/search` and `POST /api/Booking` (note casing and route differences).
+- **Spec vs implementation** — The original spec defines `POST /api/bookings`; the implementation uses `POST /api/Booking` (note casing difference). The search endpoint now matches the spec (`GET /api/Flights`).
 - **No global loading/error state** — Only the search form shows a loading spinner. The booking and flights pages have no visual loading indicator during API calls.
 - **No `ChangeDetectionStrategy.OnPush`** — The Angular components use default change detection despite the project conventions recommending `OnPush`.
 - **Mixed template syntax** — The flights table uses structural directives (`*matCellDef`, `*matHeaderRowDef`) alongside the newer `@if`/`@for` control flow syntax.
