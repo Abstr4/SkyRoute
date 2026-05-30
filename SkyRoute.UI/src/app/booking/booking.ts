@@ -1,13 +1,13 @@
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { DatePipe, CurrencyPipe } from '@angular/common';
 import { FormArray, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatCard, MatCardContent } from '@angular/material/card';
-import { FlightOffer } from '../flights/flights';
+import { Router } from '@angular/router';
+import { FlightOffer } from '../models';
 
 @Component({
   selector: 'app-booking',
