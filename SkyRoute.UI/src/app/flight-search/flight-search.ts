@@ -8,7 +8,10 @@ import { MatSelectModule } from '@angular/material/select';
 import {provideNativeDateAdapter} from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
+import { MatSelectModule } from '@angular/material/select';
+import { Router } from '@angular/router';
+import { FlightSearchRequest } from '../models';
+import { AIRPORTS, CABIN_CLASSES } from '../models/constants';
 
 @Component({
   selector: 'app-flight-search',
@@ -20,24 +23,8 @@ import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle, MatCardTitle }
 
 export class FlightSearchComponent {
 
-  readonly airports = [
-    { code: 'EZE', name: 'Buenos Aires, Argentina' },
-    { code: 'COR', name: 'Córdoba, Argentina' },
-    { code: 'MDZ', name: 'Mendoza, Argentina' },
-    { code: 'GRU', name: 'São Paulo, Brazil' },
-    { code: 'GIG', name: 'Rio de Janeiro, Brazil' },
-    { code: 'SCL', name: 'Santiago, Chile' },
-  ];
-
-  readonly passengerOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-  readonly cabinClasses = ['Economy', 'Business', 'First Class'];
-
-  private readonly cabinClassMap: Record<string, string> = {
-    'Economy': 'Economy',
-    'Business': 'Business',
-    'First Class': 'FirstClass',
-  };
+  readonly AIRPORTS = AIRPORTS;
+  readonly CABIN_CLASSES = CABIN_CLASSES;
 
   readonly searchForm = new FormGroup({
   originAirportCode: new FormControl('', { 
@@ -83,6 +70,9 @@ export class FlightSearchComponent {
       return;
     }
 
+    const cabinClass = CABIN_CLASSES.find(c => c === raw.cabinClass);
+    if (!cabinClass) return;
+
     const date = new Date(raw.departureDate);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -93,7 +83,7 @@ export class FlightSearchComponent {
       destinationAirportCode: raw.destinationAirportCode,
       departureDate: `${year}-${month}-${day}`,
       passengers: raw.passengers,
-      cabinClass: this.cabinClassMap[raw.cabinClass],
+      cabinClass,
     };
 
     this.loading.set(true);

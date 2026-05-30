@@ -1,34 +1,15 @@
-import { Component, inject, ViewChild, AfterViewInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { DatePipe, CurrencyPipe } from '@angular/common';
 import { SelectionModel } from '@angular/cdk/collections';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatSortModule, MatSort } from '@angular/material/sort';
+import { CurrencyPipe, DatePipe } from '@angular/common';
+import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { Router } from '@angular/router';
+import { FlightOffer } from '../models';
 
-export interface Airport {
-  code: string;
-  name: string;
-  city: string;
-  country: string;
-  countryCode: string;
-  displayName: string;
-  citySelectorName: string;
-}
 
-export interface FlightOffer {
-  provider: string;
-  flightNumber: string;
-  originAirport: Airport;
-  destinationAirport: Airport;
-  departureTime: string;
-  arrivalTime: string;
-  durationMinutes: number;
-  cabinClass: string;
-  pricePerPassenger: number;
-  totalPrice: number;
-}
+
 
 @Component({
   selector: 'app-flights',
