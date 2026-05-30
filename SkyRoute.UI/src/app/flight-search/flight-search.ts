@@ -1,17 +1,17 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import {provideNativeDateAdapter} from '@angular/material/core';
-import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { FlightSearchRequest } from '../models';
 import { AIRPORTS, CABIN_CLASSES } from '../models/constants';
+import { FlightSearchService } from '../services/flight-search';
 
 @Component({
   selector: 'app-flight-search',
@@ -52,6 +52,8 @@ export class FlightSearchComponent {
   }),
   cabinClass: new FormControl('Economy', { nonNullable: true }),
   });
+  
+  private flightSearchService = inject(FlightSearchService);
 
   private readonly router = inject(Router);
 
@@ -59,7 +61,7 @@ export class FlightSearchComponent {
 
   protected minDate = new Date();
 
-  async onSearch(): Promise<void> {
+  onSearch(): void {
     if (this.searchForm.invalid || this.loading()) {
       return;
     }
@@ -78,7 +80,7 @@ export class FlightSearchComponent {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
 
-    const body = {
+    const request: FlightSearchRequest = {
       originAirportCode: raw.originAirportCode,
       destinationAirportCode: raw.destinationAirportCode,
       departureDate: `${year}-${month}-${day}`,
@@ -88,29 +90,18 @@ export class FlightSearchComponent {
 
     this.loading.set(true);
 
-    try {
-      const response = await fetch(
-        'https://localhost:7229/api/Flights/search',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Search failed:', response.status, errorText);
-        return;
-      }
-
-      const data = await response.json();
-      await this.router.navigate(['/flights'], { state: { results: data, passengers: raw.passengers } });
-    } catch (error) {
-      console.error('Network error:', error);
-    } finally {
-      this.loading.set(false);
-    }
+    this.flightSearchService.searchFlights(request).subscribe({
+      next: (data) => {
+        this.router.navigate(['/flights'], { state: { results: data, passengers: raw.passengers } });
+      },
+      error: (error) => {
+        console.error('Search failed:', error);
+        this.loading.set(false);
+      },
+      complete: () => {
+        this.loading.set(false);
+      },
+    });
   }
 
   private todayOrFutureValidator(): ValidatorFn {
