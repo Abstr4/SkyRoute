@@ -9,7 +9,6 @@
 
 [![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&style=flat-square)](https://dotnet.microsoft.com)
 [![Angular](https://img.shields.io/badge/Angular-21-E13137?logo=angular&style=flat-square)](https://angular.dev)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
 [Overview](#overview) • [Features](#features) • [Getting Started](#getting-started) • [Architecture](#architecture) • [API](#api) • [Project Structure](#project-structure) • [Design Decisions](#design-decisions) • [Known Limitations](#known-limitations)
 
