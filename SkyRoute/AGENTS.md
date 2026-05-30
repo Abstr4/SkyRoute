@@ -11,7 +11,7 @@
 
 ## Endpoints
 
-- `POST /api/Flights/search` — search flights (body: FlightSearchRequest)
+- `GET /api/Flights` — search flights (query: FlightSearchRequest)
 - `POST /api/Booking` — confirm a booking (body: CreateBookingRequest)
 
 ## Architecture

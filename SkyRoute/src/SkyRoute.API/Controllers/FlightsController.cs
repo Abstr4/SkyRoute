@@ -15,8 +15,8 @@ namespace SkyRoute.API.Controllers
             _flightSearchService = flightSearchService;
         }
 
-        [HttpPost("search")]
-        public IActionResult SearchFlights([FromBody] FlightSearchRequest request)
+        [HttpGet]
+        public IActionResult SearchFlights([FromQuery] FlightSearchRequest request)
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             if (request.DepartureDate < today)
