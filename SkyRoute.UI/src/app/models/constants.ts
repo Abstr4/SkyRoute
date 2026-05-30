@@ -1,4 +1,8 @@
-export const CABIN_CLASSES = ['Economy', 'Business', 'FirstClass'] as const;
+export const CABIN_CLASSES = [
+  { label: 'Economy', value: 'Economy' },
+  { label: 'Business', value: 'Business' },
+  { label: 'First Class', value: 'FirstClass' },
+] as const;
 export const AIRPORTS = [
   { code: 'EZE', name: 'Buenos Aires, Argentina' },
   { code: 'COR', name: 'Córdoba, Argentina' },

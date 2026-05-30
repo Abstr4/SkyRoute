@@ -64,8 +64,8 @@
       <mat-form-field class="cabin-class-field">
         <mat-label>Cabin Class</mat-label>
         <mat-select formControlName="cabinClass">
-          @for (cabinClass of CABIN_CLASSES; track cabinClass) {
-            <mat-option [value]="cabinClass">{{ cabinClass }}</mat-option>
+          @for (c of CABIN_CLASSES; track c.value) {
+            <mat-option [value]="c.value">{{ c.label }}</mat-option>
           }
         </mat-select>
       </mat-form-field>

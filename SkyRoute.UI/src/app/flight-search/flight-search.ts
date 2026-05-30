@@ -72,8 +72,8 @@ export class FlightSearchComponent {
       return;
     }
 
-    const cabinClass = CABIN_CLASSES.find(c => c === raw.cabinClass);
-    if (!cabinClass) return;
+    const match = CABIN_CLASSES.find(c => c.value === raw.cabinClass);
+    if (!match) return;
 
     const date = new Date(raw.departureDate);
     const year = date.getFullYear();
@@ -85,7 +85,7 @@ export class FlightSearchComponent {
       destinationAirportCode: raw.destinationAirportCode,
       departureDate: `${year}-${month}-${day}`,
       passengers: raw.passengers,
-      cabinClass,
+      cabinClass: match.value,
     };
 
     this.loading.set(true);
