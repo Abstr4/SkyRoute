@@ -9,7 +9,7 @@
       <mat-form-field class="origin-airport-field">
         <mat-label>Origin Airport</mat-label>
         <mat-select formControlName="originAirportCode">
-          @for (airport of airports.filter(a => a.code !== searchForm.value.destinationAirportCode); track airport.code) {
+          @for (airport of AIRPORTS.filter(a => a.code !== searchForm.value.destinationAirportCode); track airport.code) {
             <mat-option [value]="airport.code">{{ airport.code }} - {{ airport.name }}</mat-option>
           }
         </mat-select>
@@ -17,7 +17,7 @@
       <mat-form-field class="destination-airport-field">
         <mat-label>Destination Airport</mat-label>
         <mat-select formControlName="destinationAirportCode">
-          @for (airport of airports.filter(a => a.code !== searchForm.value.originAirportCode); track airport.code) {
+          @for (airport of AIRPORTS.filter(a => a.code !== searchForm.value.originAirportCode); track airport.code) {
             <mat-option [value]="airport.code">{{ airport.code }} - {{ airport.name }}</mat-option>
           }
         </mat-select>
@@ -64,7 +64,7 @@
       <mat-form-field class="cabin-class-field">
         <mat-label>Cabin Class</mat-label>
         <mat-select formControlName="cabinClass">
-          @for (cabinClass of cabinClasses; track cabinClass) {
+          @for (cabinClass of CABIN_CLASSES; track cabinClass) {
             <mat-option [value]="cabinClass">{{ cabinClass }}</mat-option>
           }
         </mat-select>
