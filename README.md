@@ -86,12 +86,12 @@ bun test
 ### Backend — 4-layer Clean Architecture
 
 ```
-      SkyRoute.Domain          — models, enums (zero dependencies)
-           │
+          SkyRoute.Domain          — models, enums (zero dependencies)
+                 │
       SkyRoute.Application     — interfaces (ports), services (use cases), DTOs, contracts
-          ╱ ╲
-         ╱   ╲
-        ╱     ╲
+          ╱               ╲
+         ╱                 ╲
+        ╱                   ╲
 SkyRoute.Infrastructure     SkyRoute.API
 (providers, data store)     (controllers, DI composition root)
 ```
