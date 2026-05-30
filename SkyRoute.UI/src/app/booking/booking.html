@@ -1,1 +1,83 @@
-<p>booking works!</p>
+<mat-card>
+  <mat-card-content class="booking-layout">
+    @if (bookingReference) {
+      <div class="success-message">
+        <p>Booking confirmed!</p>
+        <p>Reference: <strong>{{ bookingReference }}</strong></p>
+        <button mat-button (click)="router.navigate(['/'])">Back to Search</button>
+      </div>
+    } @else {
+      <div class="summary-section">
+        <h2>Route Information</h2>
+        <p><strong>Origin Airport:</strong> {{ flight.originAirport.displayName }}</p>
+        <p><strong>Destination Airport:</strong> {{ flight.destinationAirport.displayName }}</p>
+
+        <h2>Flight Details</h2>
+        <p><strong>Airline:</strong> {{ flight.provider }}</p>
+        <p><strong>Flight:</strong> {{ flight.flightNumber }}</p>
+        <p><strong>Departure:</strong> {{ flight.departureTime | date:'medium' }}</p>
+        <p><strong>Arrival:</strong> {{ flight.arrivalTime | date:'medium' }}</p>
+        <p><strong>Duration:</strong> {{ flight.durationMinutes }} min</p>
+        <p><strong>Cabin Class:</strong> {{ flight.cabinClass }}</p>
+
+        <h2>Price Breakdown</h2>
+        <p>{{ flight.pricePerPassenger | currency:'USD' }} × {{ passengers }} passenger{{ passengers > 1 ? 's' : '' }}</p>
+        <p class="total-price"><strong>Total: {{ flight.totalPrice | currency:'USD' }}</strong></p>
+      </div>
+
+      <div class="form-section">
+        <h2>Passenger Details</h2>
+        <form [formGroup]="bookingForm">
+          <div formArrayName="passengersArray">
+            @for (group of passengersArray.controls; track $index) {
+              <div [formGroupName]="$index" class="passenger-form">
+                <h3>Passenger {{ $index + 1 }}</h3>
+
+                <mat-form-field>
+                  <mat-label>Full Name</mat-label>
+                  <input matInput formControlName="fullName" />
+                  @if (group.get('fullName')?.hasError('required') && group.get('fullName')?.touched) {
+                    <mat-error>Full name is required</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Email</mat-label>
+                  <input matInput type="email" formControlName="email" />
+                  @if (group.get('email')?.hasError('required') && group.get('email')?.touched) {
+                    <mat-error>Email is required</mat-error>
+                  }
+                  @if (group.get('email')?.hasError('email') && group.get('email')?.touched) {
+                    <mat-error>Enter a valid email</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>{{ documentTypeLabel }}</mat-label>
+                  <input matInput formControlName="documentNumber" />
+                  @if (group.get('documentNumber')?.hasError('required') && group.get('documentNumber')?.touched) {
+                    <mat-error>{{ documentTypeLabel }} is required</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+            }
+          </div>
+        </form>
+
+        @if (errorMessage) {
+          <p class="error">{{ errorMessage }}</p>
+        }
+      </div>
+
+      <div class="action-row">
+        <button mat-button (click)="router.navigate(['/flights'])">Back</button>
+        <button mat-raised-button color="primary" [disabled]="bookingForm.invalid || loading()" (click)="confirmBooking()">
+          @if (loading()) {
+            <mat-spinner diameter="20" />
+          }
+          Confirm Booking
+        </button>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

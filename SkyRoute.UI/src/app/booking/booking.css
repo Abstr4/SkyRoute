@@ -1,0 +1,64 @@
+.booking-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.summary-section h2 {
+  margin-top: 0;
+}
+
+.summary-section h2:not(:first-child) {
+  margin-top: 24px;
+}
+
+.summary-section p {
+  margin: 4px 0;
+}
+
+.total-price {
+  font-size: 1.1em;
+}
+
+.form-section h2 {
+  margin-top: 0;
+}
+
+mat-form-field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.passenger-form {
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.passenger-form h3 {
+  margin-top: 0;
+}
+
+.action-row {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.success-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.error {
+  color: #f44336;
+}
+
+@media (max-width: 768px) {
+  .booking-layout {
+    grid-template-columns: 1fr;
+  }
+}

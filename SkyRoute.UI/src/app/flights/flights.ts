@@ -41,6 +41,8 @@ export class Flights implements AfterViewInit {
 
   @ViewChild(MatSort) sort!: MatSort;
 
+  private passengers = 1;
+
   readonly selection = new SelectionModel<FlightOffer>(false, []);
 
   readonly displayedColumns = [
@@ -58,8 +60,9 @@ export class Flights implements AfterViewInit {
 
   constructor() {
     const nav = this.router.getCurrentNavigation();
-    const results = (nav?.extras?.state as any)?.['results'] ?? [];
-    this.dataSource.data = results;
+    const state = nav?.extras?.state as any;
+    this.dataSource.data = state?.['results'] ?? [];
+    this.passengers = state?.['passengers'] ?? 1;
   }
 
   ngAfterViewInit(): void {
@@ -83,6 +86,8 @@ export class Flights implements AfterViewInit {
   }
 
   continue(): void {
-    console.log('Selected flight:', this.selection.selected[0]);
+    this.router.navigate(['/booking'], {
+      state: { flight: this.selection.selected[0], passengers: this.passengers },
+    });
   }
 }
