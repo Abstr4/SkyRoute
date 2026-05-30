@@ -115,7 +115,7 @@ export class FlightSearchComponent {
       }
 
       const data = await response.json();
-      await this.router.navigate(['/flights'], { state: { results: data } });
+      await this.router.navigate(['/flights'], { state: { results: data, passengers: raw.passengers } });
     } catch (error) {
       console.error('Network error:', error);
     } finally {
