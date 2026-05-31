@@ -1,6 +1,16 @@
 <h2>Search Results</h2>
 
-@if (dataSource.data.length > 0) {
+@if (loading()) {
+  <div class="loading-state">
+    <mat-spinner diameter="40" />
+    <p>Searching for flights...</p>
+  </div>
+} @else if (error()) {
+  <div class="error-state">
+    <p>{{ error() }}</p>
+    <button mat-button (click)="goBack()">Back to Search</button>
+  </div>
+} @else if (dataSource.data.length > 0) {
     <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
 
       <ng-container matColumnDef="select">

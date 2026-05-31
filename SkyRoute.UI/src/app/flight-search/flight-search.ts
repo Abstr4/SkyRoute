@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -21,12 +21,9 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
-import { FlightSearchRequest } from '../models';
 import { AIRPORTS, CABIN_CLASSES, CabinClass } from '../models/constants';
-import { FlightSearchService } from '../services/flight-search';
 
 @Component({
   selector: 'app-flight-search',
@@ -39,7 +36,6 @@ import { FlightSearchService } from '../services/flight-search';
     MatDatepickerModule,
     ReactiveFormsModule,
     MatButtonModule,
-    MatProgressSpinnerModule,
     MatCard,
     MatCardContent,
     MatCardTitle,
@@ -52,9 +48,7 @@ import { FlightSearchService } from '../services/flight-search';
 export class FlightSearchComponent {
   protected readonly AIRPORTS = AIRPORTS;
   protected readonly CABIN_CLASSES = CABIN_CLASSES;
-  private flightSearchService = inject(FlightSearchService);
   private readonly router = inject(Router);
-  protected readonly loading = signal(false);
   protected minDate = new Date();
 
   protected readonly searchForm = new FormGroup({
@@ -78,46 +72,21 @@ export class FlightSearchComponent {
   });
 
   onSearch(): void {
-    if (this.searchForm.invalid || this.loading()) {
+    if (this.searchForm.invalid) {
       return;
     }
     const raw = this.searchForm.getRawValue();
 
-    const request: FlightSearchRequest = this.buildRequest(raw);
-
-    this.loading.set(true);
-
-    this.flightSearchService.searchFlights(request).subscribe({
-      next: (data) => {
-        this.router.navigate(['/flights'], {
-          state: { results: data, passengers: raw.passengers },
-        });
-      },
-      error: (error) => {
-        console.error('Search failed:', error);
-        this.loading.set(false);
-      },
-      complete: () => {
-        this.loading.set(false);
+    this.router.navigate(['/flights'], {
+      queryParams: {
+        originAirportCode: raw.originAirportCode,
+        destinationAirportCode: raw.destinationAirportCode,
+        departureDate: this.toDateOnly(raw.departureDate),
+        passengers: raw.passengers,
+        cabinClass: raw.cabinClass,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       },
     });
-  }
-
-  private buildRequest(raw: {
-    originAirportCode: string;
-    destinationAirportCode: string;
-    departureDate: string;
-    passengers: number;
-    cabinClass: 'Economy' | 'Business' | 'FirstClass';
-  }): FlightSearchRequest {
-    return {
-      originAirportCode: raw.originAirportCode,
-      destinationAirportCode: raw.destinationAirportCode,
-      departureDate: this.toDateOnly(raw.departureDate),
-      passengers: raw.passengers,
-      cabinClass: raw.cabinClass,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    };
   }
 
   private toDateOnly(value: string | Date): string {
