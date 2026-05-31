@@ -42,6 +42,7 @@ Frontend: signals + `computed()`, `OnPush`, reactive forms, `inject()` not const
 - CORS allows only `http://localhost:4200`
 - Frontend hardcodes `https://localhost:7229` (HTTPS) — no env config
 - Flight search uses `OriginAirportCode`/`DestinationAirportCode`; booking body expects `Provider`, `FlightNumber`
+- Frontend search form navigates to `/flights` with query parameters; Flights component reads them and calls the API
 - `.editorconfig`: 2-space indent, single quotes for TS
 - Specs reference .NET 9/8 but actual is .NET 10; specs say GET but impl is POST
 - Existing `SkyRoute/AGENTS.md` and `SkyRoute.UI/AGENTS.md` have per-project detail

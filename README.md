@@ -133,14 +133,14 @@ App (router-outlet)
  └── Booking                  /booking   — dynamic passenger forms, submits POST /api/Booking
 ```
 
-Data flows between components exclusively through **Router state** (`router.getCurrentNavigation().extras.state`):
+Data is passed between pages through **URL query parameters** where possible, and **router state** only where necessary:
 
-1. `FlightSearchComponent` collects form values, calls the API, and navigates to `/flights` with `{ results, passengers }` in state
-2. `Flights` displays results in a `MatTable` with client-side sorting; on selection navigates to `/booking` with `{ flight, passengers }`
+1. `FlightSearchComponent` collects form values and navigates to `/flights?originAirportCode=...&destinationAirportCode=...&departureDate=...&passengers=...&cabinClass=...&timeZone=...`
+2. `Flights` reads the query parameters, calls `GET /api/Flights`, and displays results in a `MatTable` with client-side sorting; on selection navigates to `/booking` with `{ flight, passengers }` in router state
 3. `Booking` renders the flight summary, price breakdown, and dynamic passenger forms; after successful submission displays the booking reference code
 
 > [!TIP]
-> Because data lives in router state, refreshing the browser on `/flights` or `/booking` will lose the state and redirect to the search page. This is a known trade-off (see Limitations).
+> Search query parameters in the URL survive page refresh. The `Flights` component re-fetches results from the API when the page loads. Refresh on `/booking` still loses the selected flight state, however.
 
 ---
 
@@ -303,7 +303,7 @@ The `documentType` must be `Passport` for international routes and `NationalId` 
 | **GET with query params for flight search** | Search queries on a resource collection should be GET — idempotent, cacheable, bookmarkable. The five scalar parameters fit comfortably in a URL. The original implementation used POST but was changed to align with REST conventions and the spec. |
 | **Provider pattern (Strategy)** | `IFlightProvider` lets new airlines be added by implementing a single interface and registering in DI — zero changes to existing services or controllers. |
 | **4-layer Clean Architecture** | Separates domain logic (Domain), use cases (Application), infrastructure concerns (Infrastructure), and presentation (API). Enables unit testing with mocked dependencies. |
-| **Router state for data flow** | Avoids a state management library or shared service for this small app. Simple and sufficient for a linear 3-page flow — at the cost of state surviving only as long as the in-memory navigation history. |
+| **Query params for search, router state for booking** | The flight search flow uses URL query parameters so results are bookmarkable and survive page refresh. The booking flow (selected flight + passenger count) uses router state since it's a transient selection that naturally expires on refresh — the user can always re-search. |
 | **`HttpClient` with `provideHttpClient(withFetch())`** | Uses Angular's standard HTTP client with the modern fetch-based adapter. Provides centralized error handling, typed responses, and integrates with RxJS via `Observable`. The `FlightSearchService` encapsulates all API calls, keeping components framework-aware but not HTTP-aware. |
 | **All DI in `Program.cs`** | Keeps the composition root explicit and visible in a single file. As the project grows, `DependencyInjection.cs` extension methods per layer would be cleaner. |
 | **Scalar over Swagger** | Scalar provides a more modern, readable API reference UI. Integrated via `Scalar.AspNetCore` with deep-space theme. |
@@ -318,12 +318,12 @@ The `documentType` must be `Passport` for international routes and `NationalId` 
 - **Flight ID collision** — Both providers use overlapping numeric IDs (1..N). IDs are unique only within a provider, not globally.
 - **No pagination** — Flight search returns all matching results. With more providers or routes, this would need pagination or filtering.
 - **`timeZone` is required** — The search endpoint requires an IANA timezone. The frontend sends `Intl.DateTimeFormat().resolvedOptions().timeZone` automatically. Manual API callers must include a valid timezone parameter.
-- **State lost on refresh** — Router state in Angular doesn't survive a page refresh. Navigating to `/flights` directly shows an empty state; navigating to `/booking` redirects home.
+- **Booking state lost on refresh** — Router state for the selected flight doesn't survive a page refresh on `/booking`. Navigating to `/booking` directly redirects home. Search query params in `/flights` survive refresh and results are re-fetched from the API.
 - **Hardcoded API URL** — The frontend uses `https://localhost:7229` directly. There is no environment-based configuration to switch between development and production endpoints.
 - **Backend state is ephemeral** — Bookings are stored in a private `List<Booking>` inside `BookingService` and are lost on restart.
 - **International check uses `Country` (string), not `CountryCode`** — The `BookingService` compares `originAirport.Country` vs `destinationAirport.Country`. This works for the current data but would fail if two countries shared the same name string across different codes.
 - **CORS restricted to `localhost:4200`** — The policy is hardcoded for the Angular dev server. Any other client must be added explicitly.
 - **Spec vs implementation** — The original spec defines `POST /api/bookings`; the implementation uses `POST /api/Booking` (note casing difference). The search endpoint now matches the spec (`GET /api/Flights`).
-- **No global loading/error state** — Only the search form shows a loading spinner. The booking and flights pages have no visual loading indicator during API calls.
+- **No global loading/error state** — The flights results page shows a loading spinner and error state during API calls, but the booking page has no loading indicator during submission.
 - **No `ChangeDetectionStrategy.OnPush`** — The Angular components use default change detection despite the project conventions recommending `OnPush`.
 - **Mixed template syntax** — The flights table uses structural directives (`*matCellDef`, `*matHeaderRowDef`) alongside the newer `@if`/`@for` control flow syntax.
