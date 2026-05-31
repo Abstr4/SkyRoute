@@ -117,8 +117,10 @@ The `IFlightProvider` interface defines `Search()` and `GetByFlightNumber()` met
 | Data | Count |
 |------|-------|
 | Airports | 8 (Argentina, Brazil, Chile, Peru) |
-| BudgetWings flights | 6 |
-| GlobalAir flights | 10 |
+| BudgetWings flights | 14 |
+| GlobalAir flights | 15 |
+
+Flights span **today**, **tomorrow**, and **3 days from now** across multiple routes. Each provider applies **`f.DepartureTime > DateTimeOffset.UtcNow`** so expired flights are never returned — simulating real-world provider behavior.
 
 Flight IDs are not unique across providers (both start at 1). The `BookingService` validates document types against route internationality by comparing the `Country` string field.
 
@@ -154,18 +156,21 @@ Data flows between components exclusively through **Router state** (`router.getC
 
 **Query parameters:**
 
-| Parameter | Type | Example |
-|-----------|------|---------|
-| `originAirportCode` | `string` | `EZE` |
-| `destinationAirportCode` | `string` | `GRU` |
-| `departureDate` | `string` (ISO date) | `2026-06-15` |
-| `passengers` | `int` | `2` |
-| `cabinClass` | `string` | `Economy` |
+| Parameter | Type | Required | Example |
+|-----------|------|----------|---------|
+| `originAirportCode` | `string` | yes | `EZE` |
+| `destinationAirportCode` | `string` | yes | `GRU` |
+| `departureDate` | `string` (ISO date) | yes | `2026-06-15` |
+| `passengers` | `int` | yes | `2` |
+| `cabinClass` | `string` | yes | `Economy` |
+| `timeZone` | `string` (IANA) | yes | `America/Argentina/Cordoba` |
+
+The `timeZone` parameter is required. The backend converts the user's local day into UTC boundaries and filters flights against them. Use [IANA timezone names](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g., `UTC`, `America/Argentina/Cordoba`, `America/Sao_Paulo`).
 
 **Example request:**
 
 ```
-GET /api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate=2026-06-15&passengers=2&cabinClass=Economy
+GET /api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate=2026-06-15&passengers=2&cabinClass=Economy&timeZone=UTC
 ```
 
 **Response:** `200 OK`
@@ -186,6 +191,50 @@ GET /api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate=
   }
 ]
 ```
+
+### Test Scenarios
+
+All examples use `timeZone=UTC` unless noted. Replace `departureDate` with the appropriate relative date.
+
+#### Search — flights expected
+
+| # | Scenario | Query | Expected |
+|---|----------|-------|----------|
+| 1 | **COR→MDZ today** (10 flights, 5 per provider) | `origin=COR&dest=MDZ&date=today&tz=America/Argentina/Cordoba` | 7-10 results (some morning flights may expire depending on time of day) |
+| 2 | **EZE→GRU tomorrow** (4 flights, 2 per provider) | `origin=EZE&dest=GRU&date=tomorrow&tz=UTC` | 4 results (BW404, BW408, GA401, GA402) |
+| 3 | **GRU→EZE tomorrow** (4 flights, 2 per provider) | `origin=GRU&dest=EZE&date=tomorrow&tz=UTC` | 4 results (BW707, BW708, GA305, GA306) |
+| 4 | **EZE→SCL in 3 days** (3 flights, 1 BW + 2 GA) | `origin=EZE&dest=SCL&date=in+3+days&tz=UTC` | 3 results (BW505, GA510, GA511) |
+| 5 | **EZE→COR today** (1 flight) | `origin=EZE&dest=COR&date=today&tz=UTC` | 1 result (BW101) |
+| 6 | **GRU→GIG today** (1 flight) | `origin=GRU&dest=GIG&date=today&tz=UTC` | 1 result (GA102) |
+| 7 | **EZE→MDZ today** (1 flight) | `origin=EZE&dest=MDZ&date=today&tz=UTC` | 1 result (BW202, may be expired after 12:10 UTC) |
+
+#### Search — empty / error responses
+
+| # | Scenario | Query | Expected |
+|---|----------|-------|----------|
+| 8 | **Past date** (yesterday) | `origin=COR&dest=MDZ&date=yesterday&tz=UTC` | `400 Bad Request` — date cannot be in the past |
+| 9 | **Same origin and destination** | `origin=EZE&dest=EZE&date=tomorrow&tz=UTC` | `400 Bad Request` — airports cannot be the same |
+| 10 | **Invalid timezone** | `origin=EZE&dest=GRU&date=tomorrow&tz=Foo/Bar` | `400 Bad Request` — invalid timezone |
+| 11 | **Unknown route** (no flights) | `origin=AEP&dest=LIM&date=today&tz=UTC` | `200 OK` — empty array `[]` |
+| 12 | **Far future** (no flights scheduled) | `origin=EZE&dest=GRU&date=in+30+days&tz=UTC` | `200 OK` — empty array `[]` |
+| 13 | **Date with no matching flights** | `origin=GIG&dest=LIM&date=today&tz=UTC` | `200 OK` — empty array `[]` |
+| 14 | **All flights expired today** | `origin=EZE&dest=COR&date=today&tz=UTC` (test after 08:10 UTC) | `200 OK` — empty array (BW101 already departed) |
+
+#### Booking — success scenarios
+
+| # | Scenario | Body | Expected |
+|---|----------|------|----------|
+| 15 | **Domestic route** (COR→MDZ) | `{ provider: "BudgetWings", flightNumber: "BW310", passengers: [{ fullName: "Jane Doe", email: "jane@test.com", documentType: "NationalId", documentNumber: "12345678" }] }` | `201 Created` — `{ bookingReferenceCode: "SKY-..." }` |
+| 16 | **International route** (EZE→GRU) | `{ provider: "BudgetWings", flightNumber: "BW404", passengers: [{ fullName: "Jane Doe", email: "jane@test.com", documentType: "Passport", documentNumber: "AB123456" }] }` | `201 Created` |
+
+#### Booking — error scenarios
+
+| # | Scenario | Body | Expected |
+|---|----------|------|----------|
+| 17 | **Domestic route with Passport** (COR→MDZ) | `{ provider: "BudgetWings", flightNumber: "BW310", passengers: [{ ..., documentType: "Passport" }] }` | `400 Bad Request` — must provide a National ID for domestic routes |
+| 18 | **International route with NationalId** (EZE→GRU) | `{ provider: "BudgetWings", flightNumber: "BW404", passengers: [{ ..., documentType: "NationalId" }] }` | `400 Bad Request` — must provide a Passport for international routes |
+| 19 | **Invalid provider** | `{ provider: "FakeAir", flightNumber: "BW101" }` | `400 Bad Request` |
+| 20 | **Invalid flight number** | `{ provider: "BudgetWings", flightNumber: "FAKE" }` | `400 Bad Request` |
 
 ### `POST /api/Booking`
 
@@ -259,6 +308,8 @@ The `documentType` must be `Passport` for international routes and `NationalId` 
 | **All DI in `Program.cs`** | Keeps the composition root explicit and visible in a single file. As the project grows, `DependencyInjection.cs` extension methods per layer would be cleaner. |
 | **Scalar over Swagger** | Scalar provides a more modern, readable API reference UI. Integrated via `Scalar.AspNetCore` with deep-space theme. |
 | **In-memory data store** | Zero setup, no database dependency. Adequate for a demo — but all data resets on server restart, and concurrent access uses no synchronization. |
+| **Timezone-aware day boundaries** | The backend converts the user's IANA timezone to UTC day boundaries before querying flights. This prevents local-midnight vs UTC-midnight mismatches that caused false "past date" rejections for users in negative-offset timezones. |
+| **Provider expiry filtering** | Providers filter out flights with `DepartureTime <= DateTimeOffset.UtcNow`, matching real-world behavior where airline APIs never return departed flights. Combined with the controller's past-date validation, this ensures only bookable flights are returned. |
 
 ---
 
@@ -266,6 +317,7 @@ The `documentType` must be `Passport` for international routes and `NationalId` 
 
 - **Flight ID collision** — Both providers use overlapping numeric IDs (1..N). IDs are unique only within a provider, not globally.
 - **No pagination** — Flight search returns all matching results. With more providers or routes, this would need pagination or filtering.
+- **`timeZone` is required** — The search endpoint requires an IANA timezone. The frontend sends `Intl.DateTimeFormat().resolvedOptions().timeZone` automatically. Manual API callers must include a valid timezone parameter.
 - **State lost on refresh** — Router state in Angular doesn't survive a page refresh. Navigating to `/flights` directly shows an empty state; navigating to `/booking` redirects home.
 - **Hardcoded API URL** — The frontend uses `https://localhost:7229` directly. There is no environment-based configuration to switch between development and production endpoints.
 - **Backend state is ephemeral** — Bookings are stored in a private `List<Booking>` inside `BookingService` and are lost on restart.
