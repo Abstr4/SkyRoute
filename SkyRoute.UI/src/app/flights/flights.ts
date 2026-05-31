@@ -7,13 +7,11 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { Router } from '@angular/router';
 import { FlightOffer } from '../models';
-
-
-
+import { MinutesToDurationPipe } from '../shared/minutes-to-duration.pipe';
 
 @Component({
   selector: 'app-flights',
-  imports: [MatTableModule, MatSortModule, MatButtonModule, MatCheckboxModule, DatePipe, CurrencyPipe],
+  imports: [MatTableModule, MatSortModule, MatButtonModule, MatCheckboxModule, DatePipe, CurrencyPipe, MinutesToDurationPipe],
   templateUrl: './flights.html',
   styleUrl: './flights.css',
 })

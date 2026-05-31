@@ -17,7 +17,7 @@
         <p><strong>Flight:</strong> {{ flight.flightNumber }}</p>
         <p><strong>Departure:</strong> {{ flight.departureTime | date:'medium' }}</p>
         <p><strong>Arrival:</strong> {{ flight.arrivalTime | date:'medium' }}</p>
-        <p><strong>Duration:</strong> {{ flight.durationMinutes }} min</p>
+        <p><strong>Duration:</strong> {{ flight.durationMinutes | minutesToDuration }}</p>
         <p><strong>Cabin Class:</strong> {{ flight.cabinClass }}</p>
 
         <h2>Price Breakdown</h2>
@@ -35,7 +35,7 @@
 
                 <mat-form-field>
                   <mat-label>Full Name</mat-label>
-                  <input matInput formControlName="fullName" />
+                  <input matInput formControlName="fullName" placeholder="Enter full name" />
                   @if (group.get('fullName')?.hasError('required') && group.get('fullName')?.touched) {
                     <mat-error>Full name is required</mat-error>
                   }
@@ -43,7 +43,7 @@
 
                 <mat-form-field>
                   <mat-label>Email</mat-label>
-                  <input matInput type="email" formControlName="email" />
+                  <input matInput type="email" formControlName="email" placeholder="Enter email" />
                   @if (group.get('email')?.hasError('required') && group.get('email')?.touched) {
                     <mat-error>Email is required</mat-error>
                   }
@@ -54,7 +54,7 @@
 
                 <mat-form-field>
                   <mat-label>{{ documentTypeLabel }}</mat-label>
-                  <input matInput formControlName="documentNumber" />
+                  <input matInput formControlName="documentNumber" placeholder="Enter document number" />
                   @if (group.get('documentNumber')?.hasError('required') && group.get('documentNumber')?.touched) {
                     <mat-error>{{ documentTypeLabel }} is required</mat-error>
                   }

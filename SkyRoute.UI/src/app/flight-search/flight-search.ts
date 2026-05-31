@@ -86,6 +86,7 @@ export class FlightSearchComponent {
       departureDate: `${year}-${month}-${day}`,
       passengers: raw.passengers,
       cabinClass: match.value,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
 
     this.loading.set(true);

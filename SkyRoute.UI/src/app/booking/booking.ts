@@ -8,13 +8,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { FlightOffer } from '../models';
+import { MinutesToDurationPipe } from '../shared/minutes-to-duration.pipe';
 
 @Component({
   selector: 'app-booking',
   imports: [
     MatFormFieldModule, MatInputModule, FormsModule, ReactiveFormsModule,
     MatButtonModule, MatProgressSpinnerModule, MatCard, MatCardContent,
-    DatePipe, CurrencyPipe,
+    DatePipe, CurrencyPipe, MinutesToDurationPipe,
   ],
   templateUrl: './booking.html',
   styleUrl: './booking.css',

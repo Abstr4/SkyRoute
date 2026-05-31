@@ -16,7 +16,8 @@ export class FlightSearchService {
       .set('destinationAirportCode', request.destinationAirportCode)
       .set('departureDate', request.departureDate)
       .set('passengers', request.passengers)
-      .set('cabinClass', request.cabinClass);
+      .set('cabinClass', request.cabinClass)
+      .set('timeZone', request.timeZone);
     return this.http.get<FlightOffer[]>(this.apiUrl, { params });
   }
 }
