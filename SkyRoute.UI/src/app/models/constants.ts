@@ -3,6 +3,10 @@ export const CABIN_CLASSES = [
   { label: 'Business', value: 'Business' },
   { label: 'First Class', value: 'FirstClass' },
 ] as const;
+
+export type CabinClass =
+  typeof CABIN_CLASSES[number]['value'];
+
 export const AIRPORTS = [
   { code: 'EZE', name: 'Buenos Aires, Argentina' },
   { code: 'COR', name: 'Córdoba, Argentina' },
