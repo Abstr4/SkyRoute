@@ -14,13 +14,13 @@ public sealed class FlightSearchService : IFlightSearchService
         _providers = providers;
     }
 
-    public IReadOnlyList<FlightSearchResponse> Search(FlightSearchRequest request)
+    public IReadOnlyList<FlightSearchResponse> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
     {
         var offers = new List<FlightOffer>();
 
         foreach (var provider in _providers)
         {
-            offers.AddRange(provider.Search(request));
+            offers.AddRange(provider.Search(request, utcStart, utcEnd));
         }
 
         return offers.Select(flightOffer => new FlightSearchResponse

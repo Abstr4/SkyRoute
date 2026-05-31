@@ -19,8 +19,8 @@ public sealed class FlightSearchServiceTests
         _provider1 = new Mock<IFlightProvider>();
         _provider2 = new Mock<IFlightProvider>();
 
-        _provider1.Setup(p => p.Search(It.IsAny<FlightSearchRequest>())).Returns([]);
-        _provider2.Setup(p => p.Search(It.IsAny<FlightSearchRequest>())).Returns([]);
+        _provider1.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
+        _provider2.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
 
         _service = new FlightSearchService([_provider1.Object, _provider2.Object]);
     }
@@ -29,10 +29,10 @@ public sealed class FlightSearchServiceTests
     public void Search_MultipleProviders_AggregatesAllOffers()
     {
         var request = CreateValidRequest();
-        _provider1.Setup(p => p.Search(request)).Returns([CreateOffer("BW101", "BudgetWings")]);
-        _provider2.Setup(p => p.Search(request)).Returns([CreateOffer("GA102", "GlobalAir")]);
+        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("BW101", "BudgetWings")]);
+        _provider2.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("GA102", "GlobalAir")]);
 
-        var results = _service.Search(request);
+        var results = _service.Search(request, default, default);
 
         Assert.Equal(2, results.Count);
         Assert.Contains(results, r => r.FlightNumber == "BW101");
@@ -43,9 +43,9 @@ public sealed class FlightSearchServiceTests
     public void Search_ValidRequest_CalculatesTotalPrice()
     {
         var request = CreateValidRequest(passengers: 3);
-        _provider1.Setup(p => p.Search(request)).Returns([CreateOffer("BW101", "BudgetWings", 100m)]);
+        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("BW101", "BudgetWings", 100m)]);
 
-        var results = _service.Search(request);
+        var results = _service.Search(request, default, default);
 
         var result = Assert.Single(results);
         Assert.Equal(100m, result.PricePerPassenger);
@@ -58,7 +58,7 @@ public sealed class FlightSearchServiceTests
         var emptyService = new FlightSearchService([]);
         var request = CreateValidRequest();
 
-        var results = emptyService.Search(request);
+        var results = emptyService.Search(request, default, default);
 
         Assert.Empty(results);
     }
@@ -67,10 +67,10 @@ public sealed class FlightSearchServiceTests
     public void Search_SomeProviderReturnsEmpty_StillAggregatesOthers()
     {
         var request = CreateValidRequest();
-        _provider1.Setup(p => p.Search(request)).Returns([]);
-        _provider2.Setup(p => p.Search(request)).Returns([CreateOffer("GA102", "GlobalAir")]);
+        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
+        _provider2.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("GA102", "GlobalAir")]);
 
-        var results = _service.Search(request);
+        var results = _service.Search(request, default, default);
 
         var result = Assert.Single(results);
         Assert.Equal("GA102", result.FlightNumber);
@@ -99,9 +99,9 @@ public sealed class FlightSearchServiceTests
             CabinClass = CabinClass.Economy,
             PricePerPassenger = 100m,
         };
-        _provider1.Setup(p => p.Search(request)).Returns([offer]);
+        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([offer]);
 
-        var results = _service.Search(request);
+        var results = _service.Search(request, default, default);
 
         var result = Assert.Single(results);
         Assert.Equal(270, result.DurationMinutes);
@@ -113,7 +113,7 @@ public sealed class FlightSearchServiceTests
             "EZE", "GRU",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
             passengers,
-            CabinClass.Economy);
+            CabinClass.Economy, "UTC");
     }
 
     private static FlightOffer CreateOffer(string flightNumber, string provider, decimal price = 100m)

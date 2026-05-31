@@ -27,7 +27,7 @@ public sealed class FlightsControllerTests
         var request = new FlightSearchRequest(
             "EZE", "GRU",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)),
-            1, CabinClass.Economy);
+            1, CabinClass.Economy, "UTC");
 
         var result = _controller.SearchFlights(request);
 
@@ -41,7 +41,7 @@ public sealed class FlightsControllerTests
         var request = new FlightSearchRequest(
             "EZE", "EZE",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
-            1, CabinClass.Economy);
+            1, CabinClass.Economy, "UTC");
 
         var result = _controller.SearchFlights(request);
 
@@ -55,7 +55,7 @@ public sealed class FlightsControllerTests
         var request = new FlightSearchRequest(
             "EZE", "GRU",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
-            1, CabinClass.Economy);
+            1, CabinClass.Economy, "UTC");
         var expected = new List<FlightSearchResponse>
         {
             new()
@@ -77,7 +77,7 @@ public sealed class FlightsControllerTests
                 PricePerPassenger = 100m, TotalPrice = 100m,
             },
         };
-        _searchServiceMock.Setup(s => s.Search(request)).Returns(expected);
+        _searchServiceMock.Setup(s => s.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns(expected);
 
         var result = _controller.SearchFlights(request);
 
@@ -92,8 +92,8 @@ public sealed class FlightsControllerTests
         var request = new FlightSearchRequest(
             "EZE", "GRU",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
-            1, CabinClass.Economy);
-        _searchServiceMock.Setup(s => s.Search(request))
+            1, CabinClass.Economy, "UTC");
+        _searchServiceMock.Setup(s => s.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()))
             .Throws(new Exception("unexpected"));
 
         var result = _controller.SearchFlights(request);

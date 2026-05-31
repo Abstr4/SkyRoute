@@ -9,11 +9,14 @@ public sealed class GlobalAirProvider : IFlightProvider
 {
     public string ProviderName => "GlobalAir";
 
-    public IReadOnlyCollection<FlightOffer> Search(FlightSearchRequest request)
+    public IReadOnlyCollection<FlightOffer> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
     {
         return MockDataStore.GlobalAirFlights
             .Where(f => f.OriginAirport.Code == request.OriginAirportCode
-                     && f.DestinationAirport.Code == request.DestinationAirportCode)
+                     && f.DestinationAirport.Code == request.DestinationAirportCode
+                     && f.DepartureTime >= utcStart
+                     && f.DepartureTime < utcEnd
+                     && f.DepartureTime > DateTimeOffset.UtcNow)
             .Select(f => new FlightOffer
             {
                 Provider = f.Provider,

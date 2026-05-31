@@ -1,69 +1,151 @@
 @SkyRoute_HostAddress = http://localhost:5133
 
-### Search flights
-POST {{SkyRoute_HostAddress}}/api/flights/search
-Content-Type: application/json
+### Search 1 — COR→MDZ today (10 flights across both providers)
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=COR&destinationAirportCode=MDZ&departureDate=2026-06-01&passengers=1&cabinClass=Economy&timeZone=America/Argentina/Cordoba
 
-{
-  "originAirport": "EZE",
-  "destinationAirport": "GRU",
-  "departureDate": "2026-06-15",
-  "cabinClass": "Economy",
-  "passengers": 1
-}
 ###
 
-### Search flight 2
-POST {{SkyRoute_HostAddress}}/api/flights/search
-Content-Type: application/json
-{
-  "originAirportCode": "EZE",
-  "destinationAirportCode": "GRU",
-  "departureDate": "2026-06-15",
-  "passengers": "1",
-  "cabinClass": "Economy"
-}
+### Search 2 — EZE→GRU tomorrow (4 flights, 2 per provider)
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate=2026-06-02&passengers=1&cabinClass=Economy&timeZone=UTC
+
 ###
 
-### Search flight 3
-POST {{SkyRoute_HostAddress}}/api/flights/search
-Content-Type: application/json
-{
-  "originAirportCode": "EZE",
-  "destinationAirportCode": "EZE",
-  "departureDate": "2026-01-01",
-  "passengers": "1",
-  "cabinClass": "Economy"
-}
+### Search 3 — GRU→EZE tomorrow (4 flights, 2 per provider)
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=GRU&destinationAirportCode=EZE&departureDate=2026-06-02&passengers=1&cabinClass=Economy&timeZone=UTC
+
 ###
 
-### Search flight 3
-POST {{SkyRoute_HostAddress}}/api/flights/search
-Content-Type: application/json
-{
-  "originAirportCode": "EZE",
-  "destinationAirportCode": "COR",
-  "departureDate": "2026-06-20",
-  "passengers": "1",
-  "cabinClass": "Economy"
-}
+### Search 4 — EZE→SCL in 3 days (3 flights)
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=SCL&departureDate=2026-06-04&passengers=2&cabinClass=Economy&timeZone=UTC
+
 ###
 
-### Book a flight
-POST {{SkyRoute_HostAddress}}/booking
+### Search 5 — EZE→COR today (1 flight)
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=COR&departureDate=2026-06-01&passengers=1&cabinClass=Economy&timeZone=UTC
+
+###
+
+### Search 6 — Unknown route (empty)
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=AEP&destinationAirportCode=LIM&departureDate=2026-06-01&passengers=1&cabinClass=Economy&timeZone=UTC
+
+###
+
+### Search 7 — Past date (400)
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=COR&destinationAirportCode=MDZ&departureDate=2020-01-01&passengers=1&cabinClass=Economy&timeZone=UTC
+
+###
+
+### Search 8 — Same airport (400)
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=EZE&departureDate=2026-06-01&passengers=1&cabinClass=Economy&timeZone=UTC
+
+###
+
+### Search 9 — Invalid timezone (400)
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate=2026-06-02&passengers=1&cabinClass=Economy&timeZone=Foo/Bar
+
+###
+
+### Search 10 — Far future (empty)
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate=2026-12-01&passengers=1&cabinClass=Economy&timeZone=UTC
+
+###
+
+### Book 1 — Domestic route (COR→MDZ, NationalId = 201)
+POST {{SkyRoute_HostAddress}}/api/Booking
 Content-Type: application/json
 
 {
   "provider": "BudgetWings",
-  "flightNumber": "BW101",
+  "flightNumber": "BW310",
   "passengers": [
     {
-      "fullName": "john",
-      "email": "john@doe.com",
-      "documentType": "Passport",
-      "documentNumber": "123841823"
+      "fullName": "Jane Doe",
+      "email": "jane@test.com",
+      "documentType": "NationalId",
+      "documentNumber": "12345678"
     }
   ]
+}
+
+###
+
+### Book 2 — International route (EZE→GRU, Passport = 201)
+POST {{SkyRoute_HostAddress}}/api/Booking
+Content-Type: application/json
+
+{
+  "provider": "BudgetWings",
+  "flightNumber": "BW404",
+  "passengers": [
+    {
+      "fullName": "Jane Doe",
+      "email": "jane@test.com",
+      "documentType": "Passport",
+      "documentNumber": "AB123456"
+    }
+  ]
+}
+
+###
+
+### Book 3 — Domestic route with Passport (400)
+POST {{SkyRoute_HostAddress}}/api/Booking
+Content-Type: application/json
+
+{
+  "provider": "BudgetWings",
+  "flightNumber": "BW310",
+  "passengers": [
+    {
+      "fullName": "Jane Doe",
+      "email": "jane@test.com",
+      "documentType": "Passport",
+      "documentNumber": "AB123456"
+    }
+  ]
+}
+
+###
+
+### Book 4 — International route with NationalId (400)
+POST {{SkyRoute_HostAddress}}/api/Booking
+Content-Type: application/json
+
+{
+  "provider": "BudgetWings",
+  "flightNumber": "BW404",
+  "passengers": [
+    {
+      "fullName": "Jane Doe",
+      "email": "jane@test.com",
+      "documentType": "NationalId",
+      "documentNumber": "12345678"
+    }
+  ]
+}
+
+###
+
+### Book 5 — Invalid provider (400)
+POST {{SkyRoute_HostAddress}}/api/Booking
+Content-Type: application/json
+
+{
+  "provider": "FakeAir",
+  "flightNumber": "BW101",
+  "passengers": []
+}
+
+###
+
+### Book 6 — Invalid flight number (400)
+POST {{SkyRoute_HostAddress}}/api/Booking
+Content-Type: application/json
+
+{
+  "provider": "BudgetWings",
+  "flightNumber": "FAKE",
+  "passengers": []
 }
 
 ###

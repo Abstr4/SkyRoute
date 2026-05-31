@@ -18,8 +18,22 @@ namespace SkyRoute.API.Controllers
         [HttpGet]
         public IActionResult SearchFlights([FromQuery] FlightSearchRequest request)
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            if (request.DepartureDate < today)
+            TimeZoneInfo tz;
+            try
+            {
+                tz = TimeZoneInfo.FindSystemTimeZoneById(request.TimeZone);
+            }
+            catch
+            {
+                return BadRequest("Invalid timezone.");
+            }
+
+            var localStart = request.DepartureDate.ToDateTime(TimeOnly.MinValue);
+            var localEnd = localStart.AddDays(1);
+            var utcStart = TimeZoneInfo.ConvertTimeToUtc(localStart, tz);
+            var utcEnd = TimeZoneInfo.ConvertTimeToUtc(localEnd, tz);
+
+            if (utcEnd <= DateTimeOffset.UtcNow)
             {
                 return BadRequest("Departure date cannot be in the past.");
             }
@@ -31,7 +45,7 @@ namespace SkyRoute.API.Controllers
 
             try
             {
-                var searchResults = _flightSearchService.Search(request);
+                var searchResults = _flightSearchService.Search(request, utcStart, utcEnd);
                 return Ok(searchResults);
             }
             catch (Exception ex)

@@ -11,11 +11,14 @@ public sealed class BudgetWingsProvider : IFlightProvider
 
     public string ProviderName => "BudgetWings";
 
-    public IReadOnlyCollection<FlightOffer> Search(FlightSearchRequest request)
+    public IReadOnlyCollection<FlightOffer> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
     {
         return MockDataStore.BudgetWingsFlights
             .Where(f => f.OriginAirport.Code == request.OriginAirportCode
-                     && f.DestinationAirport.Code == request.DestinationAirportCode)
+                     && f.DestinationAirport.Code == request.DestinationAirportCode
+                     && f.DepartureTime >= utcStart
+                     && f.DepartureTime < utcEnd
+                     && f.DepartureTime > DateTimeOffset.UtcNow)
             .Select(f => new FlightOffer
             {
                 Provider = f.Provider,

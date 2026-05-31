@@ -7,4 +7,5 @@ public sealed record FlightSearchRequest(
     string DestinationAirportCode,
     DateOnly DepartureDate,
     int Passengers,
-    CabinClass CabinClass);
+    CabinClass CabinClass,
+    string TimeZone);
