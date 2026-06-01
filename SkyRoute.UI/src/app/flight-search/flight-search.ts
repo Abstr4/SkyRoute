@@ -72,7 +72,7 @@ export class FlightSearchComponent {
     cabinClass: new FormControl<CabinClass>('Economy', { nonNullable: true }),
   });
 
-  onSearch(): void {
+  protected onSearch(): void {
     if (this.searchForm.invalid) {
       return;
     }

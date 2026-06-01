@@ -11,7 +11,7 @@ export class FlightSearchService {
   private apiUrl = `${environment.apiUrl}/api/Flights`;
   private http = inject(HttpClient);
 
-  searchFlights(request: FlightSearchRequest): Observable<FlightOffer[]> {
+  public searchFlights(request: FlightSearchRequest): Observable<FlightOffer[]> {
     const params = new HttpParams()
       .set('originAirportCode', request.originAirportCode)
       .set('destinationAirportCode', request.destinationAirportCode)

@@ -35,7 +35,7 @@ export class Flights implements OnInit, OnDestroy {
   private readonly flightSearchService = inject(FlightSearchService);
   private readonly destroy$ = new Subject<void>();
 
-  @ViewChild(MatSort) set sort(sort: MatSort) {
+  @ViewChild(MatSort) protected set sort(sort: MatSort) {
     this.dataSource.sort = sort;
   }
 
@@ -43,9 +43,9 @@ export class Flights implements OnInit, OnDestroy {
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  readonly selection = new SelectionModel<FlightOffer>(false, []);
+  protected readonly selection = new SelectionModel<FlightOffer>(false, []);
 
-  readonly displayedColumns = [
+  protected readonly displayedColumns = [
     'select',
     'provider',
     'flightNumber',
@@ -56,7 +56,9 @@ export class Flights implements OnInit, OnDestroy {
     'price',
   ];
 
-  readonly dataSource = new MatTableDataSource<FlightOffer>([]);
+  protected readonly dataSource = new MatTableDataSource<FlightOffer>([]);
+
+  protected currentSearchParams: Record<string, string> = {};
 
   constructor() {
     this.dataSource.sortingDataAccessor = (item: FlightOffer, property: string) => {
@@ -73,7 +75,7 @@ export class Flights implements OnInit, OnDestroy {
     };
   }
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       const originAirportCode = params.get('originAirportCode');
       const destinationAirportCode = params.get('destinationAirportCode');
@@ -115,7 +117,7 @@ export class Flights implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
+  public ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }

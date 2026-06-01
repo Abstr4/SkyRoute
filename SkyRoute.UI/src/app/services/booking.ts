@@ -9,7 +9,7 @@ export class BookingService {
   private apiUrl = `${environment.apiUrl}/api/Booking`;
   private http = inject(HttpClient);
 
-  confirmBooking(request: CreateBookingRequest): Observable<CreateBookingResponse> {
+  public confirmBooking(request: CreateBookingRequest): Observable<CreateBookingResponse> {
     return this.http.post<CreateBookingResponse>(this.apiUrl, request);
   }
 }
