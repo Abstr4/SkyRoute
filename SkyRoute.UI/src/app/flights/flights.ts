@@ -1,6 +1,6 @@
 import { SelectionModel } from '@angular/cdk/collections';
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -29,13 +29,15 @@ import { MinutesToDurationPipe } from '../shared/minutes-to-duration.pipe';
   templateUrl: './flights.html',
   styleUrl: './flights.css',
 })
-export class Flights implements OnInit, AfterViewInit, OnDestroy {
+export class Flights implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly flightSearchService = inject(FlightSearchService);
   private readonly destroy$ = new Subject<void>();
 
-  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatSort) set sort(sort: MatSort) {
+    this.dataSource.sort = sort;
+  }
 
   protected readonly passengers = signal(1);
   protected readonly loading = signal(false);
@@ -55,6 +57,21 @@ export class Flights implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   readonly dataSource = new MatTableDataSource<FlightOffer>([]);
+
+  constructor() {
+    this.dataSource.sortingDataAccessor = (item: FlightOffer, property: string) => {
+      switch (property) {
+        case 'durationMinutes':
+          return item.durationMinutes;
+        case 'departureTime':
+          return new Date(item.departureTime).getTime();
+        case 'price':
+          return item.totalPrice;
+        default:
+          return (item as unknown as Record<string, string>)[property] ?? '';
+      }
+    };
+  }
 
   ngOnInit(): void {
     this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
@@ -101,21 +118,5 @@ export class Flights implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  ngAfterViewInit(): void {
-    this.dataSource.sort = this.sort;
-    this.dataSource.sortingDataAccessor = (item: FlightOffer, property: string) => {
-      switch (property) {
-        case 'durationMinutes':
-          return item.durationMinutes;
-        case 'departureTime':
-          return new Date(item.departureTime).getTime();
-        case 'price':
-          return item.totalPrice;
-        default:
-          return (item as unknown as Record<string, string>)[property] ?? '';
-      }
-    };
   }
 }
