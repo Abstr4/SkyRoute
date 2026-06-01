@@ -49,10 +49,10 @@ Flights are served from an in-memory data store with two mock providers (BudgetW
 
 ```bash
 cd SkyRoute
-dotnet run
+dotnet run --launch-profile https
 ```
 
-The API starts on `http://localhost:5133`. Open `http://localhost:5133/scalar/v1` in a browser to explore the API interactively.
+The API starts on `https://localhost:7229`. Open `https://localhost:7229/scalar/v1` in a browser to explore the API interactively.
 
 ### Run the UI
 
@@ -122,7 +122,7 @@ The `IFlightProvider` interface defines `Search()` and `GetByFlightNumber()` met
 
 Flights span **today**, **tomorrow**, and **3 days from now** across multiple routes. Each provider applies **`f.DepartureTime > DateTimeOffset.UtcNow`** so expired flights are never returned — simulating real-world provider behavior.
 
-Flight IDs are not unique across providers (both start at 1). The `BookingService` validates document types against route internationality by comparing the `Country` string field.
+Flight IDs are not unique across providers (both start at 1). The `BookingService` validates document types against route internationality by comparing the `CountryCode` string field.
 
 ### Frontend — Component tree and data flow
 
@@ -319,11 +319,10 @@ The `documentType` must be `Passport` for international routes and `NationalId` 
 - **No pagination** — Flight search returns all matching results. With more providers or routes, this would need pagination or filtering.
 - **`timeZone` is required** — The search endpoint requires an IANA timezone. The frontend sends `Intl.DateTimeFormat().resolvedOptions().timeZone` automatically. Manual API callers must include a valid timezone parameter.
 - **Booking state lost on refresh** — Router state for the selected flight doesn't survive a page refresh on `/booking`. Navigating to `/booking` directly redirects home. Search query params in `/flights` survive refresh and results are re-fetched from the API.
-- **Hardcoded API URL** — The frontend uses `https://localhost:7229` directly. There is no environment-based configuration to switch between development and production endpoints.
+- **Hardcoded API URL** — The frontend uses `https://localhost:7229` in both `environment.ts` and `environment.development.ts`, so there is no per-environment switching.
 - **Backend state is ephemeral** — Bookings are stored in a private `List<Booking>` inside `BookingService` and are lost on restart.
-- **International check uses `Country` (string), not `CountryCode`** — The `BookingService` compares `originAirport.Country` vs `destinationAirport.Country`. This works for the current data but would fail if two countries shared the same name string across different codes.
+- **International check uses `CountryCode`** — The `BookingService` compares `CountryCode` to determine if a route is international. Correct for the current data and the recommended approach.
 - **CORS restricted to `localhost:4200`** — The policy is hardcoded for the Angular dev server. Any other client must be added explicitly.
 - **Spec vs implementation** — The original spec defines `POST /api/bookings`; the implementation uses `POST /api/Booking` (note casing difference). The search endpoint now matches the spec (`GET /api/Flights`).
-- **No global loading/error state** — The flights results page shows a loading spinner and error state during API calls, but the booking page has no loading indicator during submission.
-- **No `ChangeDetectionStrategy.OnPush`** — The Angular components use default change detection despite the project conventions recommending `OnPush`.
+- **No centralized loading/error handling** — Loading and error states are managed independently per component without a shared interceptor or global handler.
 - **Mixed template syntax** — The flights table uses structural directives (`*matCellDef`, `*matHeaderRowDef`) alongside the newer `@if`/`@for` control flow syntax.
