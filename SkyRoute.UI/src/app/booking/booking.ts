@@ -23,7 +23,7 @@ import { MinutesToDurationPipe } from '../shared/minutes-to-duration.pipe';
   styleUrl: './booking.css',
 })
 export class Booking {
-  readonly router = inject(Router);
+  protected readonly router = inject(Router);
 
   readonly flight: FlightOffer;
   readonly passengers: number;
