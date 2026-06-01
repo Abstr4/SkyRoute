@@ -8,9 +8,6 @@
         <a mat-button routerLink="/">Back to Search</a>
       </div>
     } @else {
-      @if (loading()) {
-        <mat-spinner mode="indeterminate"/>
-      }
       <div class="summary-section">
         <h2>Route Information</h2>
         <p><strong>Origin Airport:</strong> {{ flight.originAirport.displayName }}</p>
@@ -75,12 +72,14 @@
 
       <div class="action-row">
         <a mat-button routerLink="/flights">Back</a>
-        <button mat-raised-button color="primary" [disabled]="bookingForm.invalid || loading()" (click)="confirmBooking()">
+        <div>
           @if (loading()) {
             <mat-spinner diameter="20" />
           }
-          Confirm Booking
-        </button>
+          <button mat-raised-button color="primary" [disabled]="bookingForm.invalid || loading()" (click)="confirmBooking()">
+            Confirm Booking
+          </button>
+        </div>
       </div>
     }
   </mat-card-content>
