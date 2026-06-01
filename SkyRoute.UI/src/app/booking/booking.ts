@@ -35,8 +35,8 @@ export class Booking {
   readonly bookingForm: FormGroup;
 
   readonly loading = signal(false);
-  bookingReference: string | null = null;
-  errorMessage: string | null = null;
+  readonly bookingReference = signal<string | null>(null);
+  readonly errorMessage = signal<string | null>(null);
 
   constructor() {
     const nav = this.router.getCurrentNavigation();
@@ -84,8 +84,8 @@ export class Booking {
     }
 
     this.loading.set(true);
-    this.bookingReference = null;
-    this.errorMessage = null;
+    this.bookingReference.set(null);
+    this.errorMessage.set(null);
 
     const passengerForms = this.passengersArray.value as Array<{
       fullName: string;
@@ -97,11 +97,11 @@ export class Booking {
 
     this.bookingService.confirmBooking(body).subscribe({
       next: (data) => {
-        this.bookingReference = data.bookingReferenceCode;
+        this.bookingReference.set(data.bookingReferenceCode);
         this.loading.set(false);
       },
       error: (err) => {
-        this.errorMessage = err.error?.error ?? 'Booking failed. Please try again.';
+        this.errorMessage.set(err.error?.error ?? 'Booking failed. Please try again.');
         this.loading.set(false);
       },
     });

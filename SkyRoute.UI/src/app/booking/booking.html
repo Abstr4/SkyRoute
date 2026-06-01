@@ -1,9 +1,9 @@
 <mat-card>
   <mat-card-content class="booking-layout">
-    @if (bookingReference) {
+    @if (bookingReference()) {
       <div class="success-message">
         <p>Booking confirmed!</p>
-        <p>Reference: <strong>{{ bookingReference }}</strong></p>
+        <p>Reference: <strong>{{ bookingReference() }}</strong></p>
         <button mat-button (click)="router.navigate(['/'])">Back to Search</button>
       </div>
     } @else {
@@ -67,8 +67,8 @@
           </div>
         </form>
 
-        @if (errorMessage) {
-          <p class="error">{{ errorMessage }}</p>
+        @if (errorMessage()) {
+          <p class="error">{{ errorMessage() }}</p>
         }
       </div>
 
