@@ -90,6 +90,14 @@ export class Flights implements OnInit, OnDestroy {
       const cabinClass = (params.get('cabinClass') ?? 'Economy') as FlightSearchRequest['cabinClass'];
       const timeZone = params.get('timeZone') ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+      this.currentSearchParams = {
+        originAirportCode,
+        destinationAirportCode,
+        departureDate,
+        passengers: String(passengers),
+        cabinClass: String(cabinClass),
+        timeZone,
+      };
       this.passengers.set(passengers);
       this.loading.set(true);
       this.error.set(null);

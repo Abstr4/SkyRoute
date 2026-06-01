@@ -71,7 +71,7 @@
       </div>
 
       <div class="action-row">
-        <a mat-button routerLink="/flights">Back</a>
+        <a mat-button [routerLink]="['/flights']" [queryParams]="searchParams">Back</a>
         <div>
           @if (loading()) {
             <mat-spinner diameter="20" />

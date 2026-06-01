@@ -27,25 +27,28 @@ export class Booking {
   protected readonly router = inject(Router);
   private readonly bookingService = inject(BookingService);
 
-  readonly flight: FlightOffer;
-  readonly passengers: number;
-  readonly isInternational: boolean;
-  readonly documentTypeLabel: string;
-  readonly documentTypeValue: string;
+  protected readonly flight: FlightOffer;
+  protected readonly passengers: number;
+  protected readonly searchParams: Record<string, string>;
+  protected readonly isInternational: boolean;
+  protected readonly documentTypeLabel: string;
+  protected readonly documentTypeValue: string;
 
-  readonly bookingForm: FormGroup;
+  protected readonly bookingForm: FormGroup;
 
-  readonly loading = signal(false);
-  readonly bookingReference = signal<string | null>(null);
-  readonly errorMessage = signal<string | null>(null);
+  protected readonly loading = signal(false);
+  protected readonly bookingReference = signal<string | null>(null);
+  protected readonly errorMessage = signal<string | null>(null);
 
   constructor() {
-    const nav = this.router.getCurrentNavigation();
-    const state = nav?.extras?.state as { flight: FlightOffer; passengers: number } | undefined;
+    const nav = this.router.currentNavigation();
+    const state = nav?.extras?.state as
+      { flight: FlightOffer; passengers: number; searchParams: Record<string, string> } | undefined;
 
     if (!state?.flight) {
       this.flight = null!;
       this.passengers = 0;
+      this.searchParams = {};
       this.isInternational = false;
       this.documentTypeLabel = '';
       this.documentTypeValue = '';
@@ -56,6 +59,7 @@ export class Booking {
 
     this.flight = state.flight;
     this.passengers = state.passengers;
+    this.searchParams = state.searchParams ?? {};
 
     this.isInternational =
       this.flight.originAirport.countryCode !== this.flight.destinationAirport.countryCode;
@@ -75,11 +79,11 @@ export class Booking {
     });
   }
 
-  get passengersArray(): FormArray {
+  protected get passengersArray(): FormArray {
     return this.bookingForm.controls['passengersArray'] as FormArray;
   }
 
-  async confirmBooking(): Promise<void> {
+  protected async confirmBooking(): Promise<void> {
     if (this.bookingForm.invalid || this.loading()) {
       return;
     }
