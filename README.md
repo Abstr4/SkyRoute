@@ -48,7 +48,7 @@ Flights are served from an in-memory data store with two mock providers (BudgetW
 ### Run the API
 
 ```bash
-cd SkyRoute
+cd SkyRoute/src/SkyRoute.API
 dotnet run --launch-profile https
 ```
 
@@ -71,7 +71,7 @@ The UI starts on `http://localhost:4200`. The CORS policy only allows this origi
 
 ```bash
 # Backend tests (xUnit + Moq)
-cd SkyRoute
+cd SkyRoute/src/SkyRoute.Test
 dotnet test
 
 # Frontend tests (Vitest)
@@ -321,8 +321,6 @@ The `documentType` must be `Passport` for international routes and `NationalId` 
 - **Booking state lost on refresh** — Router state for the selected flight doesn't survive a page refresh on `/booking`. Navigating to `/booking` directly redirects home. Search query params in `/flights` survive refresh and results are re-fetched from the API.
 - **Hardcoded API URL** — The frontend uses `https://localhost:7229` in both `environment.ts` and `environment.development.ts`, so there is no per-environment switching.
 - **Backend state is ephemeral** — Bookings are stored in a private `List<Booking>` inside `BookingService` and are lost on restart.
-- **International check uses `CountryCode`** — The `BookingService` compares `CountryCode` to determine if a route is international. Correct for the current data and the recommended approach.
 - **CORS restricted to `localhost:4200`** — The policy is hardcoded for the Angular dev server. Any other client must be added explicitly.
-- **Spec vs implementation** — The original spec defines `POST /api/bookings`; the implementation uses `POST /api/Booking` (note casing difference). The search endpoint now matches the spec (`GET /api/Flights`).
 - **No centralized loading/error handling** — Loading and error states are managed independently per component without a shared interceptor or global handler.
-- **Mixed template syntax** — The flights table uses structural directives (`*matCellDef`, `*matHeaderRowDef`) alongside the newer `@if`/`@for` control flow syntax.
+
