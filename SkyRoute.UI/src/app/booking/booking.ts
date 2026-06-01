@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormArray, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCard, MatCardContent } from '@angular/material/card';
@@ -7,11 +7,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 import { FlightOffer } from '../models';
 import { MinutesToDurationPipe } from '../shared/minutes-to-duration.pipe';
 
 @Component({
   selector: 'app-booking',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatFormFieldModule, MatInputModule, FormsModule, ReactiveFormsModule,
     MatButtonModule, MatProgressSpinnerModule, MatCard, MatCardContent,
@@ -102,7 +104,7 @@ export class Booking {
     };
 
     try {
-      const response = await fetch('https://localhost:7229/api/Booking', {
+      const response = await fetch(`${environment.apiUrl}/api/Booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

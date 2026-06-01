@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -27,6 +27,7 @@ import { AIRPORTS, CABIN_CLASSES, CabinClass } from '../models/constants';
 
 @Component({
   selector: 'app-flight-search',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [provideNativeDateAdapter()],
   imports: [
     MatFormFieldModule,
