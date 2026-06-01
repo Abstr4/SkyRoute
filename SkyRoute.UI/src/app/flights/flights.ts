@@ -6,7 +6,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { FlightOffer, FlightSearchRequest } from '../models';
 import { FlightSearchService } from '../services/flight-search';
@@ -21,6 +21,7 @@ import { MinutesToDurationPipe } from '../shared/minutes-to-duration.pipe';
     MatButtonModule,
     MatCheckboxModule,
     MatProgressSpinnerModule,
+    RouterLink,
     DatePipe,
     CurrencyPipe,
     MinutesToDurationPipe,
@@ -116,15 +117,5 @@ export class Flights implements OnInit, AfterViewInit, OnDestroy {
           return (item as unknown as Record<string, string>)[property] ?? '';
       }
     };
-  }
-
-  goBack(): void {
-    this.router.navigate(['/']);
-  }
-
-  continue(): void {
-    this.router.navigate(['/booking'], {
-      state: { flight: this.selection.selected[0], passengers: this.passengers() },
-    });
   }
 }

@@ -1,10 +1,11 @@
+<h1 class="sr-only">Complete Booking</h1>
 <mat-card>
   <mat-card-content class="booking-layout">
     @if (bookingReference()) {
       <div class="success-message">
         <p>Booking confirmed!</p>
         <p>Reference: <strong>{{ bookingReference() }}</strong></p>
-        <button mat-button (click)="router.navigate(['/'])">Back to Search</button>
+        <a mat-button routerLink="/">Back to Search</a>
       </div>
     } @else {
       @if (loading()) {
@@ -73,7 +74,7 @@
       </div>
 
       <div class="action-row">
-        <button mat-button (click)="router.navigate(['/flights'])">Back</button>
+        <a mat-button routerLink="/flights">Back</a>
         <button mat-raised-button color="primary" [disabled]="bookingForm.invalid || loading()" (click)="confirmBooking()">
           @if (loading()) {
             <mat-spinner diameter="20" />

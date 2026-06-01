@@ -6,7 +6,7 @@ import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CreateBookingRequest, FlightOffer } from '../models';
 import { BookingService } from '../services/booking';
 import { MinutesToDurationPipe } from '../shared/minutes-to-duration.pipe';
@@ -17,6 +17,7 @@ import { MinutesToDurationPipe } from '../shared/minutes-to-duration.pipe';
   imports: [
     MatFormFieldModule, MatInputModule, FormsModule, ReactiveFormsModule,
     MatButtonModule, MatProgressSpinnerModule, MatCard, MatCardContent,
+    RouterLink,
     DatePipe, CurrencyPipe, MinutesToDurationPipe,
   ],
   templateUrl: './booking.html',

@@ -1,4 +1,4 @@
-<h2>Search Results</h2>
+<h1 class="sr-only">Search Results</h1>
 
 @if (loading()) {
   <div class="loading-state">
@@ -8,7 +8,7 @@
 } @else if (error()) {
   <div class="error-state">
     <p>{{ error() }}</p>
-    <button mat-button (click)="goBack()">Back to Search</button>
+    <a mat-button routerLink="/">Back to Search</a>
   </div>
 } @else if (dataSource.data.length > 0) {
     <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
@@ -62,20 +62,26 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+          title="{{ row.provider }} {{ row.flightNumber }}"
           (click)="selection.toggle(row)"
+          (keydown.Enter)="selection.toggle(row)"
+          (keydown.Space)="selection.toggle(row); $event.preventDefault()"
+          tabindex="0"
+          role="button"
+          [attr.aria-selected]="selection.isSelected(row)"
           [class.mat-mdc-row-selected]="selection.isSelected(row)">
       </tr>
     </table>
 
     <div class="continue-button">
-      <button id="continue-button" matButton="filled" [disabled]="!selection.hasValue()" (click)="continue()">
+      <a id="continue-button" mat-button [routerLink]="['/booking']" [state]="{ flight: selection.selected[0], passengers: passengers() }" [disabled]="!selection.hasValue()">
         Continue
-      </button>
+      </a>
     </div>
 } @else {
   <div class="empty-state">
     <p>No flights match your search.</p>
-    <button mat-button (click)="goBack()">Back to Search</button>
+    <a mat-button routerLink="/">Back to Search</a>
   </div>
 }
