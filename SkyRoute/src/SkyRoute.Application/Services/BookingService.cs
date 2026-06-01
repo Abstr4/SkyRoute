@@ -27,7 +27,7 @@ public sealed class BookingService : IBookingService
             ?? throw new ArgumentException(
                 $"Flight {request.FlightNumber} from {request.Provider} is no longer available.");
 
-        bool isInternational = !string.Equals(selectedFlight.OriginAirport.Country, selectedFlight.DestinationAirport.Country, StringComparison.OrdinalIgnoreCase);
+        bool isInternational = !string.Equals(selectedFlight.OriginAirport.CountryCode, selectedFlight.DestinationAirport.CountryCode, StringComparison.OrdinalIgnoreCase);
 
         var domainPassengers = new List<Passenger>();
 

@@ -16,7 +16,7 @@ public class BookingController : ControllerBase
         _bookingService = bookingService;
     }
 
-    [HttpPost(Name = "CreateBooking")]
+    [HttpPost]
     [ProducesResponseType(typeof(CreateBookingResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
