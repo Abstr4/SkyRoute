@@ -7,6 +7,9 @@
         <button mat-button (click)="router.navigate(['/'])">Back to Search</button>
       </div>
     } @else {
+      @if (loading()) {
+        <mat-spinner mode="indeterminate"/>
+      }
       <div class="summary-section">
         <h2>Route Information</h2>
         <p><strong>Origin Airport:</strong> {{ flight.originAirport.displayName }}</p>
