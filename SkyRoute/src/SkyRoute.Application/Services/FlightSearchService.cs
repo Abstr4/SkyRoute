@@ -1,6 +1,5 @@
-using SkyRoute.Application.Contracts.Requests;
-using SkyRoute.Application.Contracts.Responses;
 using SkyRoute.Application.DTOs;
+using SkyRoute.Application.Features.Flights;
 using SkyRoute.Application.Interfaces;
 
 namespace SkyRoute.Application.Services;

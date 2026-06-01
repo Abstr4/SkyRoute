@@ -1,4 +1,4 @@
-using SkyRoute.Application.Contracts.Requests;
+using SkyRoute.Application.Features.Booking;
 using SkyRoute.Domain.Models;
 
 namespace SkyRoute.Application.Interfaces;

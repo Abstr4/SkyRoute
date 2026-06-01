@@ -1,5 +1,4 @@
-using SkyRoute.Application.Contracts.Requests;
-using SkyRoute.Application.Contracts.Responses;
+using SkyRoute.Application.Features.Flights;
 
 namespace SkyRoute.Application.Interfaces;
 

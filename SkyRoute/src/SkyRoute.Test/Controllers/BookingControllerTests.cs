@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using SkyRoute.Application.Contracts.Requests;
-using SkyRoute.Application.Contracts.Responses;
 using SkyRoute.Application.Interfaces;
 using SkyRoute.API.Controllers;
 using SkyRoute.Domain.Models;
+using SkyRoute.Application.Features.Booking;
 
 namespace SkyRoute.Test.Controllers;
 

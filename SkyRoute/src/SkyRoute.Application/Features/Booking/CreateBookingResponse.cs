@@ -1,4 +1,4 @@
-namespace SkyRoute.Application.Contracts.Responses;
+namespace SkyRoute.Application.Features.Booking;
 
 public sealed class CreateBookingResponse
 {

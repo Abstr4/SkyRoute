@@ -1,5 +1,5 @@
-using SkyRoute.Application.Contracts.Requests;
 using SkyRoute.Application.DTOs;
+using SkyRoute.Application.Features.Booking;
 using SkyRoute.Application.Interfaces;
 using SkyRoute.Domain.Models;
 

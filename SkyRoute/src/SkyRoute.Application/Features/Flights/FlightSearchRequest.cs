@@ -1,6 +1,6 @@
 using SkyRoute.Domain.Models;
 
-namespace SkyRoute.Application.Contracts.Requests;
+namespace SkyRoute.Application.Features.Flights;
 
 public sealed record FlightSearchRequest(
     string OriginAirportCode,

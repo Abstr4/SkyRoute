@@ -1,7 +1,7 @@
 using SkyRoute.Application.DTOs;
 using SkyRoute.Domain.Models;
 
-namespace SkyRoute.Application.Contracts.Responses;
+namespace SkyRoute.Application.Features.Flights;
 
 public sealed record FlightSearchResponse
 {

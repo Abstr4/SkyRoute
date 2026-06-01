@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SkyRoute.Application.Contracts.Requests;
+using SkyRoute.Application.Features.Flights;
 using SkyRoute.Application.Interfaces;
 
 namespace SkyRoute.API.Controllers

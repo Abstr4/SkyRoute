@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Scalar.AspNetCore;
+using SkyRoute.Application;
 using SkyRoute.Application.Interfaces;
 using SkyRoute.Application.Services;
 using SkyRoute.Infrastructure.Providers;
@@ -17,13 +18,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-
 // Add services to the container.
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
+builder.Services.AddApplication();
+
 builder.Services.AddOpenApi();
 
 // Individual providers so the IEnumerable<IFlightProvider> collection populates
