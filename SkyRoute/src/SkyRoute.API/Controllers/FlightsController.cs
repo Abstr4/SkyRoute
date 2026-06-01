@@ -18,35 +18,13 @@ namespace SkyRoute.API.Controllers
         [HttpGet]
         public IActionResult SearchFlights([FromQuery] FlightSearchRequest request)
         {
-            TimeZoneInfo tz;
             try
             {
-                tz = TimeZoneInfo.FindSystemTimeZoneById(request.TimeZone);
-            }
-            catch
-            {
-                return BadRequest("Invalid timezone.");
-            }
+                var result = _flightSearchService.Search(request);
+                if (!result.IsSuccess)
+                    return BadRequest(new { errors = result.Errors });
 
-            var localStart = request.DepartureDate.ToDateTime(TimeOnly.MinValue);
-            var localEnd = localStart.AddDays(1);
-            var utcStart = TimeZoneInfo.ConvertTimeToUtc(localStart, tz);
-            var utcEnd = TimeZoneInfo.ConvertTimeToUtc(localEnd, tz);
-
-            if (utcEnd <= DateTimeOffset.UtcNow)
-            {
-                return BadRequest("Departure date cannot be in the past.");
-            }
-
-            if (string.Equals(request.OriginAirportCode, request.DestinationAirportCode, StringComparison.OrdinalIgnoreCase))
-            {
-                return BadRequest("Origin and destination airports cannot be the same.");
-            }
-
-            try
-            {
-                var searchResults = _flightSearchService.Search(request, utcStart, utcEnd);
-                return Ok(searchResults);
+                return Ok(result.Value);
             }
             catch (Exception ex)
             {

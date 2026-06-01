@@ -1,3 +1,4 @@
+using SkyRoute.Application.Common;
 using SkyRoute.Application.Features.Booking;
 using SkyRoute.Domain.Models;
 
@@ -5,5 +6,5 @@ namespace SkyRoute.Application.Interfaces;
 
 public interface IBookingService
 {
-    Booking ConfirmBooking(CreateBookingRequest request);
+    Result<Booking> ConfirmBooking(CreateBookingRequest request);
 }

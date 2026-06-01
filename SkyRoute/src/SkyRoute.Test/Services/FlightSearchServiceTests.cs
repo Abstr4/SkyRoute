@@ -32,11 +32,12 @@ public sealed class FlightSearchServiceTests
         _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("BW101", "BudgetWings")]);
         _provider2.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("GA102", "GlobalAir")]);
 
-        var results = _service.Search(request, default, default);
+        var result = _service.Search(request);
 
-        Assert.Equal(2, results.Count);
-        Assert.Contains(results, r => r.FlightNumber == "BW101");
-        Assert.Contains(results, r => r.FlightNumber == "GA102");
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value!.Count);
+        Assert.Contains(result.Value, r => r.FlightNumber == "BW101");
+        Assert.Contains(result.Value, r => r.FlightNumber == "GA102");
     }
 
     [Fact]
@@ -45,11 +46,12 @@ public sealed class FlightSearchServiceTests
         var request = CreateValidRequest(passengers: 3);
         _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("BW101", "BudgetWings", 100m)]);
 
-        var results = _service.Search(request, default, default);
+        var result = _service.Search(request);
 
-        var result = Assert.Single(results);
-        Assert.Equal(100m, result.PricePerPassenger);
-        Assert.Equal(300m, result.TotalPrice);
+        Assert.True(result.IsSuccess);
+        var value = Assert.Single(result.Value!);
+        Assert.Equal(100m, value.PricePerPassenger);
+        Assert.Equal(300m, value.TotalPrice);
     }
 
     [Fact]
@@ -58,9 +60,10 @@ public sealed class FlightSearchServiceTests
         var emptyService = new FlightSearchService([]);
         var request = CreateValidRequest();
 
-        var results = emptyService.Search(request, default, default);
+        var result = emptyService.Search(request);
 
-        Assert.Empty(results);
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value!);
     }
 
     [Fact]
@@ -70,10 +73,11 @@ public sealed class FlightSearchServiceTests
         _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
         _provider2.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("GA102", "GlobalAir")]);
 
-        var results = _service.Search(request, default, default);
+        var result = _service.Search(request);
 
-        var result = Assert.Single(results);
-        Assert.Equal("GA102", result.FlightNumber);
+        Assert.True(result.IsSuccess);
+        var value = Assert.Single(result.Value!);
+        Assert.Equal("GA102", value.FlightNumber);
     }
 
     [Fact]
@@ -101,10 +105,11 @@ public sealed class FlightSearchServiceTests
         };
         _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([offer]);
 
-        var results = _service.Search(request, default, default);
+        var result = _service.Search(request);
 
-        var result = Assert.Single(results);
-        Assert.Equal(270, result.DurationMinutes);
+        Assert.True(result.IsSuccess);
+        var value = Assert.Single(result.Value!);
+        Assert.Equal(270, value.DurationMinutes);
     }
 
     private static FlightSearchRequest CreateValidRequest(int passengers = 1)

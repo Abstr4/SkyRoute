@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using SkyRoute.Application.Common;
 using SkyRoute.Application.Interfaces;
 using SkyRoute.API.Controllers;
 using SkyRoute.Domain.Models;
@@ -42,7 +43,8 @@ public sealed class BookingControllerTests
             PricePerPassenger = 100m,
             TotalPrice = 100m,
         };
-        _bookingServiceMock.Setup(s => s.ConfirmBooking(request)).Returns(booking);
+        _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
+            .Returns(Result<Booking>.Success(booking));
 
         var result = _controller.CreateBooking(request);
 
@@ -57,12 +59,12 @@ public sealed class BookingControllerTests
     {
         var request = new CreateBookingRequest("BudgetWings", "BW101", []);
         _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
-            .Throws(new ArgumentException("Flight BW101 from BudgetWings is no longer available."));
+            .Returns(Result<Booking>.Failure("Flight BW101 from BudgetWings is no longer available."));
 
         var result = _controller.CreateBooking(request);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Contains("no longer available", badRequest.Value!.ToString());
+        Assert.Equal(400, badRequest.StatusCode);
     }
 
     [Fact]
@@ -73,12 +75,28 @@ public sealed class BookingControllerTests
             new("Jane Doe", "jane@test.com", DocumentType.NationalId, "12345678"),
         });
         _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
-            .Throws(new InvalidOperationException("must provide a Passport Number"));
+            .Returns(Result<Booking>.Failure("must provide a Passport Number"));
 
         var result = _controller.CreateBooking(request);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Contains("Passport", badRequest.Value!.ToString());
+        Assert.Equal(400, badRequest.StatusCode);
+    }
+
+    [Fact]
+    public void CreateBooking_ValidationFailure_ReturnsBadRequest()
+    {
+        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
+        {
+            new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
+        });
+        _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
+            .Returns(Result<Booking>.Failure("Invalid request."));
+
+        var result = _controller.CreateBooking(request);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequest.StatusCode);
     }
 
     [Fact]

@@ -23,12 +23,17 @@ public sealed class BookingServiceTests
     }
 
     [Fact]
-    public void ConfirmBooking_UnknownFlight_ThrowsArgumentException()
+    public void ConfirmBooking_UnknownFlight_ReturnsFailure()
     {
-        var request = new CreateBookingRequest("BudgetWings", "UNKNOWN", []);
+        var request = new CreateBookingRequest("BudgetWings", "UNKNOWN", new List<CreatePassengerRequest>
+        {
+            new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
+        });
 
-        var ex = Assert.Throws<ArgumentException>(() => _service.ConfirmBooking(request));
-        Assert.Contains("UNKNOWN", ex.Message);
+        var result = _service.ConfirmBooking(request);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("UNKNOWN", result.Errors[0]);
     }
 
     [Fact]
@@ -41,11 +46,11 @@ public sealed class BookingServiceTests
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
         });
 
-        var booking = _service.ConfirmBooking(request);
+        var result = _service.ConfirmBooking(request);
 
-        Assert.NotNull(booking);
-        Assert.StartsWith("SKY-", booking.ReferenceCode);
-        Assert.Single(booking.Passengers);
+        Assert.True(result.IsSuccess);
+        Assert.StartsWith("SKY-", result.Value!.ReferenceCode);
+        Assert.Single(result.Value.Passengers);
     }
 
     [Fact]
@@ -58,14 +63,14 @@ public sealed class BookingServiceTests
             new("Jane Doe", "jane@test.com", DocumentType.Passport, "AB123456"),
         });
 
-        var booking = _service.ConfirmBooking(request);
+        var result = _service.ConfirmBooking(request);
 
-        Assert.NotNull(booking);
-        Assert.StartsWith("SKY-", booking.ReferenceCode);
+        Assert.True(result.IsSuccess);
+        Assert.StartsWith("SKY-", result.Value!.ReferenceCode);
     }
 
     [Fact]
-    public void ConfirmBooking_InternationalRouteWithNationalId_ThrowsInvalidOperation()
+    public void ConfirmBooking_InternationalRouteWithNationalId_ReturnsFailure()
     {
         var offer = CreateOffer("EZE", "GRU");
         _providerMock.Setup(p => p.GetByFlightNumber("BW101")).Returns(offer);
@@ -74,12 +79,14 @@ public sealed class BookingServiceTests
             new("Jane Doe", "jane@test.com", DocumentType.NationalId, "12345678"),
         });
 
-        var ex = Assert.Throws<InvalidOperationException>(() => _service.ConfirmBooking(request));
-        Assert.Contains("Passport", ex.Message);
+        var result = _service.ConfirmBooking(request);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("Passport", result.Errors[0]);
     }
 
     [Fact]
-    public void ConfirmBooking_DomesticRouteWithPassport_ThrowsInvalidOperation()
+    public void ConfirmBooking_DomesticRouteWithPassport_ReturnsFailure()
     {
         var offer = CreateOffer("EZE", "COR");
         _providerMock.Setup(p => p.GetByFlightNumber("BW101")).Returns(offer);
@@ -88,8 +95,10 @@ public sealed class BookingServiceTests
             new("John Doe", "john@test.com", DocumentType.Passport, "AB123456"),
         });
 
-        var ex = Assert.Throws<InvalidOperationException>(() => _service.ConfirmBooking(request));
-        Assert.Contains("National ID", ex.Message);
+        var result = _service.ConfirmBooking(request);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("National ID", result.Errors[0]);
     }
 
     [Fact]
@@ -103,10 +112,11 @@ public sealed class BookingServiceTests
             new("Jane Doe", "jane@test.com", DocumentType.NationalId, "87654321"),
         });
 
-        var booking = _service.ConfirmBooking(request);
+        var result = _service.ConfirmBooking(request);
 
-        Assert.Equal(150m, booking.PricePerPassenger);
-        Assert.Equal(300m, booking.TotalPrice);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(150m, result.Value!.PricePerPassenger);
+        Assert.Equal(300m, result.Value.TotalPrice);
     }
 
     [Fact]
@@ -119,13 +129,14 @@ public sealed class BookingServiceTests
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
         });
 
-        var booking = _service.ConfirmBooking(request);
+        var result = _service.ConfirmBooking(request);
 
-        Assert.Equal("BudgetWings", booking.ProviderName);
-        Assert.Equal("BW101", booking.FlightNumber);
-        Assert.Equal("EZE", booking.OriginAirportCode);
-        Assert.Equal("COR", booking.DestinationAirportCode);
-        Assert.Equal(CabinClass.Economy, booking.CabinClass);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("BudgetWings", result.Value!.ProviderName);
+        Assert.Equal("BW101", result.Value.FlightNumber);
+        Assert.Equal("EZE", result.Value.OriginAirportCode);
+        Assert.Equal("COR", result.Value.DestinationAirportCode);
+        Assert.Equal(CabinClass.Economy, result.Value.CabinClass);
     }
 
     [Theory]
@@ -140,10 +151,10 @@ public sealed class BookingServiceTests
             new("Test Passenger", "test@test.com", docType, "12345678"),
         });
 
-        var booking = _service.ConfirmBooking(request);
+        var result = _service.ConfirmBooking(request);
 
-        Assert.NotNull(booking);
-        Assert.NotEmpty(booking.ReferenceCode);
+        Assert.True(result.IsSuccess);
+        Assert.NotEmpty(result.Value!.ReferenceCode);
     }
 
     private static FlightOffer CreateOffer(string originCode, string destCode, decimal price = 100m)

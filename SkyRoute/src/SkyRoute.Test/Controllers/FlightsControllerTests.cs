@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using SkyRoute.Application.Contracts.Requests;
+using SkyRoute.Application.Common;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Interfaces;
 using SkyRoute.API.Controllers;
@@ -19,34 +19,6 @@ public sealed class FlightsControllerTests
     {
         _searchServiceMock = new Mock<IFlightSearchService>();
         _controller = new FlightsController(_searchServiceMock.Object);
-    }
-
-    [Fact]
-    public void SearchFlights_PastDepartureDate_ReturnsBadRequest()
-    {
-        var request = new FlightSearchRequest(
-            "EZE", "GRU",
-            DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)),
-            1, CabinClass.Economy, "UTC");
-
-        var result = _controller.SearchFlights(request);
-
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("Departure date cannot be in the past.", badRequest.Value);
-    }
-
-    [Fact]
-    public void SearchFlights_SameOriginAndDestination_ReturnsBadRequest()
-    {
-        var request = new FlightSearchRequest(
-            "EZE", "EZE",
-            DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
-            1, CabinClass.Economy, "UTC");
-
-        var result = _controller.SearchFlights(request);
-
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("Origin and destination airports cannot be the same.", badRequest.Value);
     }
 
     [Fact]
@@ -77,7 +49,8 @@ public sealed class FlightsControllerTests
                 PricePerPassenger = 100m, TotalPrice = 100m,
             },
         };
-        _searchServiceMock.Setup(s => s.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns(expected);
+        _searchServiceMock.Setup(s => s.Search(request))
+            .Returns(Result<IReadOnlyList<FlightSearchResponse>>.Success(expected));
 
         var result = _controller.SearchFlights(request);
 
@@ -87,13 +60,29 @@ public sealed class FlightsControllerTests
     }
 
     [Fact]
+    public void SearchFlights_ValidationFailure_ReturnsBadRequest()
+    {
+        var request = new FlightSearchRequest(
+            "EZE", "GRU",
+            DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
+            1, CabinClass.Economy, "UTC");
+        _searchServiceMock.Setup(s => s.Search(request))
+            .Returns(Result<IReadOnlyList<FlightSearchResponse>>.Failure("Invalid timezone."));
+
+        var result = _controller.SearchFlights(request);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequest.StatusCode);
+    }
+
+    [Fact]
     public void SearchFlights_ServiceThrowsException_Returns500()
     {
         var request = new FlightSearchRequest(
             "EZE", "GRU",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
             1, CabinClass.Economy, "UTC");
-        _searchServiceMock.Setup(s => s.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>()))
+        _searchServiceMock.Setup(s => s.Search(request))
             .Throws(new Exception("unexpected"));
 
         var result = _controller.SearchFlights(request);

@@ -23,29 +23,21 @@ public class BookingController : ControllerBase
     {
         try
         {
-            var booking = _bookingService.ConfirmBooking(request);
+            var result = _bookingService.ConfirmBooking(request);
+            if (!result.IsSuccess)
+                return BadRequest(new { errors = result.Errors });
 
             var response = new CreateBookingResponse
             {
-                BookingReferenceCode = booking.ReferenceCode
+                BookingReferenceCode = result.Value!.ReferenceCode
             };
 
             return CreatedAtAction(nameof(CreateBooking), response);
         }
-        catch (ArgumentException ex)
-        {
-            // Flight not found or invalid airport data
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            // Document type validation failed
-            return BadRequest(new { error = ex.Message });
-        }
         catch (Exception)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An unexpected error occurred while processing your booking request." });
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new { error = "An unexpected error occurred while processing your request." });
         }
     }
 }

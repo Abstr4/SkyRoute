@@ -1,3 +1,4 @@
+using SkyRoute.Application.Common;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Booking;
 using SkyRoute.Application.Interfaces;
@@ -16,15 +17,21 @@ public sealed class BookingService : IBookingService
         _providers = providers;
     }
 
-    public Booking ConfirmBooking(CreateBookingRequest request)
+    public Result<Booking> ConfirmBooking(CreateBookingRequest request)
     {
+        var validator = new CreateBookingRequestValidator();
+        var validation = validator.Validate(request);
+        if (!validation.IsValid)
+            return Result<Booking>.Failure(validation.Errors.Select(e => e.ErrorMessage));
+
         var provider = _providers.FirstOrDefault(p => p.ProviderName == request.Provider);
 
         if (provider is null)
-            throw new ArgumentException("Invalid Provider.");
+            return Result<Booking>.Failure("Invalid Provider.");
 
-        var selectedFlight = provider.GetByFlightNumber(request.FlightNumber)
-            ?? throw new ArgumentException(
+        var selectedFlight = provider.GetByFlightNumber(request.FlightNumber);
+        if (selectedFlight is null)
+            return Result<Booking>.Failure(
                 $"Flight {request.FlightNumber} from {request.Provider} is no longer available.");
 
         bool isInternational = !string.Equals(selectedFlight.OriginAirport.CountryCode, selectedFlight.DestinationAirport.CountryCode, StringComparison.OrdinalIgnoreCase);
@@ -35,12 +42,14 @@ public sealed class BookingService : IBookingService
         {
             if (isInternational && passenger.DocumentType != DocumentType.Passport)
             {
-                throw new InvalidOperationException($"Passenger '{passenger.FullName}' must provide a Passport Number for international routes.");
+                return Result<Booking>.Failure(
+                    $"Passenger '{passenger.FullName}' must provide a Passport Number for international routes.");
             }
 
             if (!isInternational && passenger.DocumentType != DocumentType.NationalId)
             {
-                throw new InvalidOperationException($"Passenger '{passenger.FullName}' must provide a National ID for domestic routes.");
+                return Result<Booking>.Failure(
+                    $"Passenger '{passenger.FullName}' must provide a National ID for domestic routes.");
             }
 
             CreatePassenger(domainPassengers, passenger);
@@ -49,7 +58,7 @@ public sealed class BookingService : IBookingService
         Booking flatBooking = CreateBooking(selectedFlight, domainPassengers);
 
         _bookingsDatabase.Add(flatBooking);
-        return flatBooking;
+        return Result<Booking>.Success(flatBooking);
     }
 
     private void CreatePassenger(List<Passenger> domainPassengers, CreatePassengerRequest passenger)
