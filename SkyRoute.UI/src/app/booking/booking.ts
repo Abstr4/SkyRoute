@@ -7,8 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
-import { environment } from '../../environments/environment';
-import { FlightOffer } from '../models';
+import { CreateBookingRequest, FlightOffer } from '../models';
+import { BookingService } from '../services/booking';
 import { MinutesToDurationPipe } from '../shared/minutes-to-duration.pipe';
 
 @Component({
@@ -24,6 +24,7 @@ import { MinutesToDurationPipe } from '../shared/minutes-to-duration.pipe';
 })
 export class Booking {
   protected readonly router = inject(Router);
+  private readonly bookingService = inject(BookingService);
 
   readonly flight: FlightOffer;
   readonly passengers: number;
@@ -92,7 +93,22 @@ export class Booking {
       documentNumber: string;
     }>;
 
-    const body = {
+    const body: CreateBookingRequest = this.buildBookingRequest(passengerForms);
+
+    this.bookingService.confirmBooking(body).subscribe({
+      next: (data) => {
+        this.bookingReference = data.bookingReferenceCode;
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.error ?? 'Booking failed. Please try again.';
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private buildBookingRequest(passengerForms: { fullName: string; email: string; documentNumber: string; }[]): CreateBookingRequest {
+    return {
       provider: this.flight.provider,
       flightNumber: this.flight.flightNumber,
       passengers: passengerForms.map(p => ({
@@ -102,26 +118,5 @@ export class Booking {
         documentNumber: p.documentNumber,
       })),
     };
-
-    try {
-      const response = await fetch(`${environment.apiUrl}/api/Booking`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.json();
-        this.errorMessage = errorBody.error ?? 'Booking failed. Please try again.';
-        return;
-      }
-
-      const data = await response.json();
-      this.bookingReference = data.bookingReferenceCode;
-    } catch {
-      this.errorMessage = 'Network error. Please try again.';
-    } finally {
-      this.loading.set(false);
-    }
   }
 }
