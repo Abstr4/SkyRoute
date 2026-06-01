@@ -75,7 +75,7 @@
     </table>
 
     <div class="continue-button">
-      <a id="continue-button" mat-button [routerLink]="['/booking']" [state]="{ flight: selection.selected[0], passengers: passengers() }" [disabled]="!selection.hasValue()">
+      <a id="continue-button" matButton="filled" [routerLink]="['/booking']" [state]="{ flight: selection.selected[0], passengers: passengers() }" [disabled]="!selection.hasValue()">
         Continue
       </a>
     </div>

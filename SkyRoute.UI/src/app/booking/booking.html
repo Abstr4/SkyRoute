@@ -76,7 +76,7 @@
           @if (loading()) {
             <mat-spinner diameter="20" />
           }
-          <button mat-raised-button color="primary" [disabled]="bookingForm.invalid || loading()" (click)="confirmBooking()">
+          <button matButton="filled" [disabled]="bookingForm.invalid || loading()" (click)="confirmBooking()">
             Confirm Booking
           </button>
         </div>
