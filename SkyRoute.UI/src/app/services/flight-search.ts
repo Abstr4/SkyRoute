@@ -2,12 +2,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { FlightSearchRequest, FlightOffer } from '../models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FlightSearchService {
-  private apiUrl = 'https://localhost:7229/api/Flights';
+  private apiUrl = `${environment.apiUrl}/api/Flights`;
   private http = inject(HttpClient);
 
   searchFlights(request: FlightSearchRequest): Observable<FlightOffer[]> {
