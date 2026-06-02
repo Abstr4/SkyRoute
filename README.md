@@ -137,6 +137,7 @@ App (router-outlet)
 | **Timezone-aware day boundaries** | The backend converts the user's IANA timezone to UTC boundaries before querying flights, preventing false "past date" rejections for users in negative-offset timezones. |
 | **Result pattern + global exception handler** | `Result<T>` return types keep expected failures (validation, not-found) explicit in the domain layer rather than throwing exceptions for control flow. The `GlobalExceptionHandler` catches remaining unexpected exceptions and returns structured `application/problem+json` responses. |
 | **`IExceptionHandler` over custom middleware** | Uses the built-in `IExceptionHandler` API registered via `AddExceptionHandler<T>()` instead of a custom middleware pipeline — produces `ProblemDetails` out of the box, aligning with RFC 9457 problem response conventions. |
+| **Re-seed on startup over EF Core `HasData()`** | `HasData()` bakes static seed data into migrations at migration time. Flight departure times must be relative to "now" (today, tomorrow, +3 days) so expired-flight filtering and test scenarios remain valid across restarts. Re-seeding on application start keeps dates current. |
 | **Scalar over Swagger** | A more modern, readable API reference UI with minimal configuration via `Scalar.AspNetCore`. |
 
 ---
