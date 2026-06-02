@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Flights;
 using SkyRoute.Application.Interfaces;
@@ -7,11 +8,18 @@ namespace SkyRoute.Infrastructure.Providers;
 
 public sealed class GlobalAirProvider : IFlightProvider
 {
+    private readonly ILogger<GlobalAirProvider> _logger;
+
+    public GlobalAirProvider(ILogger<GlobalAirProvider> logger)
+    {
+        _logger = logger;
+    }
+
     public string ProviderName => "GlobalAir";
 
     public IReadOnlyCollection<FlightOffer> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
     {
-        return MockDataStore.GlobalAirFlights
+        var results = MockDataStore.GlobalAirFlights
             .Where(f => f.OriginAirport.Code == request.OriginAirportCode
                      && f.DestinationAirport.Code == request.DestinationAirportCode
                      && f.DepartureTime >= utcStart
@@ -29,13 +37,25 @@ public sealed class GlobalAirProvider : IFlightProvider
                 PricePerPassenger = CalculatePrice(f.BaseFare),
             })
             .ToList();
+
+        _logger.LogDebug(
+            "GlobalAir search {Origin}->{Destination}: {Count} result(s)",
+            request.OriginAirportCode, request.DestinationAirportCode, results.Count);
+
+        return results;
     }
 
     public FlightOffer? GetByFlightNumber(string flightNumber)
     {
         var flight = MockDataStore.GlobalAirFlights
             .FirstOrDefault(f => f.FlightNumber == flightNumber);
-        if (flight is null) return null;
+        if (flight is null)
+        {
+            _logger.LogWarning("GlobalAir flight not found: {FlightNumber}", flightNumber);
+            return null;
+        }
+
+        _logger.LogDebug("GlobalAir flight found: {FlightNumber}", flightNumber);
 
         return new FlightOffer
         {

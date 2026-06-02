@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using SkyRoute.Application.Common;
 using SkyRoute.Application.DTOs;
@@ -18,7 +19,7 @@ public sealed class FlightsControllerTests
     public FlightsControllerTests()
     {
         _searchServiceMock = new Mock<IFlightSearchService>();
-        _controller = new FlightsController(_searchServiceMock.Object);
+        _controller = new FlightsController(_searchServiceMock.Object, Mock.Of<ILogger<FlightsController>>());
     }
 
     [Fact]

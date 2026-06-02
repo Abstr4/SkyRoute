@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SkyRoute.Application.Common;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Booking;
@@ -10,11 +11,15 @@ public sealed class BookingService : IBookingService
 {
     private readonly List<Booking> _bookingsDatabase = new();
     private readonly IEnumerable<IFlightProvider> _providers;
+    private readonly ILogger<BookingService> _logger;
     private int _passengerId;
 
-    public BookingService(IEnumerable<IFlightProvider> providers)
+    public BookingService(
+        IEnumerable<IFlightProvider> providers,
+        ILogger<BookingService> logger)
     {
         _providers = providers;
+        _logger = logger;
     }
 
     public Result<Booking> ConfirmBooking(CreateBookingRequest request)
@@ -24,15 +29,27 @@ public sealed class BookingService : IBookingService
         if (!validation.IsValid)
             return Result<Booking>.Failure(validation.Errors.Select(e => e.ErrorMessage));
 
+        _logger.LogInformation(
+            "Processing booking: {Provider} flight {FlightNumber}",
+            request.Provider, request.FlightNumber);
+
         var provider = _providers.FirstOrDefault(p => p.ProviderName == request.Provider);
 
         if (provider is null)
+        {
+            _logger.LogWarning("Invalid provider: {Provider}", request.Provider);
             return Result<Booking>.Failure("Invalid Provider.");
+        }
 
         var selectedFlight = provider.GetByFlightNumber(request.FlightNumber);
         if (selectedFlight is null)
+        {
+            _logger.LogWarning(
+                "Flight not found: {Provider} / {FlightNumber}",
+                request.Provider, request.FlightNumber);
             return Result<Booking>.Failure(
                 $"Flight {request.FlightNumber} from {request.Provider} is no longer available.");
+        }
 
         bool isInternational = !string.Equals(selectedFlight.OriginAirport.CountryCode, selectedFlight.DestinationAirport.CountryCode, StringComparison.OrdinalIgnoreCase);
 
@@ -58,6 +75,11 @@ public sealed class BookingService : IBookingService
         Booking flatBooking = CreateBooking(selectedFlight, domainPassengers);
 
         _bookingsDatabase.Add(flatBooking);
+
+        _logger.LogInformation(
+            "Booking confirmed: {ReferenceCode} for {Provider} flight {FlightNumber}",
+            flatBooking.ReferenceCode, flatBooking.ProviderName, flatBooking.FlightNumber);
+
         return Result<Booking>.Success(flatBooking);
     }
 

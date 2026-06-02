@@ -1,14 +1,20 @@
 using System.Text.Json.Serialization;
 using Scalar.AspNetCore;
+using Serilog;
 using SkyRoute.Application.Interfaces;
 using SkyRoute.Application.Services;
 using SkyRoute.Infrastructure.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog((context, loggerConfiguration) =>
+{
+    loggerConfiguration.ReadFrom.Configuration(context.Configuration);
+});
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AngularFrontend", policy =>
+    options.AddPolicy("Angular", policy =>
     {
         policy
             .WithOrigins("http://localhost:4200")
@@ -50,9 +56,11 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseSerilogRequestLogging();
+
 app.UseHttpsRedirection();
 
-app.UseCors("AngularFrontend");
+app.UseCors("Angular");
 
 app.UseAuthorization();
 

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using SkyRoute.Application.Common;
 using SkyRoute.Application.Interfaces;
@@ -17,7 +18,7 @@ public sealed class BookingControllerTests
     public BookingControllerTests()
     {
         _bookingServiceMock = new Mock<IBookingService>();
-        _controller = new BookingController(_bookingServiceMock.Object);
+        _controller = new BookingController(_bookingServiceMock.Object, Mock.Of<ILogger<BookingController>>());
     }
 
     [Fact]

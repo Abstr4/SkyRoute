@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Flights;
 using SkyRoute.Application.Interfaces;
@@ -8,12 +9,18 @@ namespace SkyRoute.Infrastructure.Providers;
 public sealed class BudgetWingsProvider : IFlightProvider
 {
     private const decimal MinimumPrice = 29.99m;
+    private readonly ILogger<BudgetWingsProvider> _logger;
+
+    public BudgetWingsProvider(ILogger<BudgetWingsProvider> logger)
+    {
+        _logger = logger;
+    }
 
     public string ProviderName => "BudgetWings";
 
     public IReadOnlyCollection<FlightOffer> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
     {
-        return MockDataStore.BudgetWingsFlights
+        var results = MockDataStore.BudgetWingsFlights
             .Where(f => f.OriginAirport.Code == request.OriginAirportCode
                      && f.DestinationAirport.Code == request.DestinationAirportCode
                      && f.DepartureTime >= utcStart
@@ -31,13 +38,25 @@ public sealed class BudgetWingsProvider : IFlightProvider
                 PricePerPassenger = CalculatePrice(f.BaseFare),
             })
             .ToList();
+
+        _logger.LogDebug(
+            "BudgetWings search {Origin}->{Destination}: {Count} result(s)",
+            request.OriginAirportCode, request.DestinationAirportCode, results.Count);
+
+        return results;
     }
 
     public FlightOffer? GetByFlightNumber(string flightNumber)
     {
         var flight = MockDataStore.BudgetWingsFlights
             .FirstOrDefault(f => f.FlightNumber == flightNumber);
-        if (flight is null) return null;
+        if (flight is null)
+        {
+            _logger.LogWarning("BudgetWings flight not found: {FlightNumber}", flightNumber);
+            return null;
+        }
+
+        _logger.LogDebug("BudgetWings flight found: {FlightNumber}", flightNumber);
 
         return new FlightOffer
         {

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Moq;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Flights;
@@ -22,7 +23,7 @@ public sealed class FlightSearchServiceTests
         _provider1.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
         _provider2.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
 
-        _service = new FlightSearchService([_provider1.Object, _provider2.Object]);
+        _service = new FlightSearchService([_provider1.Object, _provider2.Object], Mock.Of<ILogger<FlightSearchService>>());
     }
 
     [Fact]
@@ -57,7 +58,7 @@ public sealed class FlightSearchServiceTests
     [Fact]
     public void Search_NoProviders_ReturnsEmptyList()
     {
-        var emptyService = new FlightSearchService([]);
+        var emptyService = new FlightSearchService([], Mock.Of<ILogger<FlightSearchService>>());
         var request = CreateValidRequest();
 
         var result = emptyService.Search(request);

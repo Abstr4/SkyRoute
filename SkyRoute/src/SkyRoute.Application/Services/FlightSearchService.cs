@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SkyRoute.Application.Common;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Flights;
@@ -8,10 +9,14 @@ namespace SkyRoute.Application.Services;
 public sealed class FlightSearchService : IFlightSearchService
 {
     private readonly IEnumerable<IFlightProvider> _providers;
+    private readonly ILogger<FlightSearchService> _logger;
 
-    public FlightSearchService(IEnumerable<IFlightProvider> providers)
+    public FlightSearchService(
+        IEnumerable<IFlightProvider> providers,
+        ILogger<FlightSearchService> logger)
     {
         _providers = providers;
+        _logger = logger;
     }
 
     public Result<IReadOnlyList<FlightSearchResponse>> Search(FlightSearchRequest request)
@@ -32,8 +37,20 @@ public sealed class FlightSearchService : IFlightSearchService
 
         foreach (var provider in _providers)
         {
-            offers.AddRange(provider.Search(request, utcStart, utcEnd));
+            _logger.LogDebug(
+                "Querying {Provider} for flights {Origin}->{Destination}",
+                provider.ProviderName, request.OriginAirportCode, request.DestinationAirportCode);
+
+            var providerOffers = provider.Search(request, utcStart, utcEnd);
+            offers.AddRange(providerOffers);
+
+            _logger.LogDebug(
+                "{Provider} returned {Count} flight(s)", provider.ProviderName, providerOffers.Count);
         }
+
+        _logger.LogInformation(
+            "Flight search completed: {Total} offer(s) from {ProviderCount} provider(s)",
+            offers.Count, _providers.Count());
 
         return Result<IReadOnlyList<FlightSearchResponse>>.Success(
             offers.Select(flightOffer => new FlightSearchResponse

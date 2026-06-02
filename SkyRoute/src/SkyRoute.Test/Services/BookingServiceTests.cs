@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Moq;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Booking;
@@ -19,7 +20,7 @@ public sealed class BookingServiceTests
         _providerMock = new Mock<IFlightProvider>();
         _providerMock.Setup(p => p.ProviderName).Returns("BudgetWings");
 
-        _service = new BookingService([_providerMock.Object]);
+        _service = new BookingService([_providerMock.Object], Mock.Of<ILogger<BookingService>>());
     }
 
     [Fact]
