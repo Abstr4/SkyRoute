@@ -31,25 +31,17 @@ namespace SkyRoute.API.Controllers
                 request.OriginAirportCode, request.DestinationAirportCode,
                 request.DepartureDate, request.Passengers);
 
-            try
+            var result = _flightSearchService.Search(request);
+            if (result.IsFailure)
             {
-                var result = _flightSearchService.Search(request);
-                if (!result.IsSuccess)
-                {
-                    _logger.LogWarning(
-                        "Flight search validation failed: {Errors}", result.Errors);
-                    return BadRequest(new { errors = result.Errors });
-                }
+                _logger.LogWarning(
+                    "Flight search validation failed: {Errors}", result.Errors);
+                return BadRequest(new { errors = result.Errors });
+            }
 
-                _logger.LogInformation(
-                    "Flight search returned {Count} result(s)", result.Value!.Count);
-                return Ok(result.Value);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Flight search failed unexpectedly");
-                return StatusCode(500, "An unexpected error occurred while processing your search.");
-            }
+            _logger.LogInformation(
+                "Flight search returned {Count} result(s)", result.Value!.Count);
+            return Ok(result.Value);
         }
     }
 }

@@ -100,19 +100,5 @@ public sealed class BookingControllerTests
         Assert.Equal(400, badRequest.StatusCode);
     }
 
-    [Fact]
-    public void CreateBooking_UnexpectedException_Returns500()
-    {
-        var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
-        {
-            new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
-        });
-        _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
-            .Throws(new Exception("unexpected"));
 
-        var result = _controller.CreateBooking(request);
-
-        var statusResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, statusResult.StatusCode);
-    }
 }

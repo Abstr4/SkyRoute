@@ -23,6 +23,7 @@ public sealed class FlightSearchService : IFlightSearchService
     {
         var validator = new FlightSearchRequestValidator();
         var validation = validator.Validate(request);
+
         if (!validation.IsValid)
             return Result<IReadOnlyList<FlightSearchResponse>>.Failure(
                 validation.Errors.Select(e => e.ErrorMessage));

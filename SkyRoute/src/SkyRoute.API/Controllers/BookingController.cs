@@ -29,30 +29,22 @@ public class BookingController : ControllerBase
             "Booking requested: {Provider} flight {FlightNumber}, {Passengers} passenger(s)",
             request.Provider, request.FlightNumber, request.Passengers?.Count ?? 0);
 
-        try
+        var result = _bookingService.ConfirmBooking(request);
+        if (result.IsFailure)
         {
-            var result = _bookingService.ConfirmBooking(request);
-            if (!result.IsSuccess)
-            {
-                _logger.LogWarning(
-                    "Booking failed: {Errors}", result.Errors);
-                return BadRequest(new { errors = result.Errors });
-            }
-
-            var response = new CreateBookingResponse
-            {
-                BookingReferenceCode = result.Value!.ReferenceCode
-            };
-
-            _logger.LogInformation(
-                "Booking confirmed: {ReferenceCode}", response.BookingReferenceCode);
-            return CreatedAtAction(nameof(CreateBooking), response);
+            _logger.LogWarning(
+                "Booking failed: {Errors}", result.Errors);
+            return BadRequest(new { errors = result.Errors });
         }
-        catch (Exception ex)
+
+        var response = new CreateBookingResponse
         {
-            _logger.LogError(ex, "Booking failed unexpectedly");
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                new { error = "An unexpected error occurred while processing your request." });
-        }
+            BookingReferenceCode = result.Value!.ReferenceCode
+        };
+
+        _logger.LogInformation(
+            "Booking confirmed: {ReferenceCode}", response.BookingReferenceCode);
+
+        return CreatedAtAction(nameof(CreateBooking), response);
     }
 }

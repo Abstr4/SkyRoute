@@ -1,11 +1,21 @@
 using System.Text.Json.Serialization;
 using Scalar.AspNetCore;
 using Serilog;
+using SkyRoute.API.Exceptions;
 using SkyRoute.Application.Interfaces;
 using SkyRoute.Application.Services;
 using SkyRoute.Infrastructure.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddProblemDetails(configure =>
+{
+    configure.CustomizeProblemDetails = context =>
+    {
+        context.ProblemDetails.Extensions.TryAdd("requestId",context.HttpContext.TraceIdentifier);
+    };
+});
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Host.UseSerilog((context, loggerConfiguration) =>
 {
@@ -54,9 +64,12 @@ if (app.Environment.IsDevelopment())
             .WithTheme(ScalarTheme.DeepSpace)
             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
     });
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseSerilogRequestLogging();
+
+app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 

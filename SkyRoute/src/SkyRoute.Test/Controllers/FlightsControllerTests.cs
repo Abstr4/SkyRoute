@@ -76,19 +76,5 @@ public sealed class FlightsControllerTests
         Assert.Equal(400, badRequest.StatusCode);
     }
 
-    [Fact]
-    public void SearchFlights_ServiceThrowsException_Returns500()
-    {
-        var request = new FlightSearchRequest(
-            "EZE", "GRU",
-            DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
-            1, CabinClass.Economy, "UTC");
-        _searchServiceMock.Setup(s => s.Search(request))
-            .Throws(new Exception("unexpected"));
 
-        var result = _controller.SearchFlights(request);
-
-        var statusResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, statusResult.StatusCode);
-    }
 }

@@ -17,6 +17,7 @@ public sealed class Result<T>
 
     public T? Value { get; }
     public bool IsSuccess { get; }
+    public bool IsFailure => !IsSuccess;
     public IReadOnlyList<string> Errors { get; }
 
     public static Result<T> Success(T value) => new(value);
