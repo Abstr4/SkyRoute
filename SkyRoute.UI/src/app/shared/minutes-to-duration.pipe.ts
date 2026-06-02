@@ -10,13 +10,9 @@ export class MinutesToDurationPipe implements PipeTransform {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
 
-    const hourPart = hours > 0
-      ? `${hours} hour${hours > 1 ? 's' : ''}`
-      : '';
+    const hourPart = hours > 0 ? `${hours} hour${hours > 1 ? 's' : ''}` : '';
 
-    const minPart = mins > 0
-      ? `${mins} min`
-      : '';
+    const minPart = mins > 0 ? `${mins} min` : '';
 
     return hourPart && minPart ? `${hourPart} ${minPart}` : hourPart || minPart;
   }

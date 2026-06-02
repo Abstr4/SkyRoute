@@ -6,8 +6,8 @@ import { CreateBookingRequest, CreateBookingResponse } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {
-  private apiUrl = `${environment.apiUrl}/api/Booking`;
-  private http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/api/Booking`;
+  private readonly http = inject(HttpClient);
 
   public confirmBooking(request: CreateBookingRequest): Observable<CreateBookingResponse> {
     return this.http.post<CreateBookingResponse>(this.apiUrl, request);

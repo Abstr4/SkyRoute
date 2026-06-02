@@ -1,10 +1,12 @@
 <h1 class="sr-only">Complete Booking</h1>
 <mat-card>
   <mat-card-content class="booking-layout">
-    @if (bookingReference()) {
+    @if (response()) {
       <div class="success-message">
         <p>Booking confirmed!</p>
-        <p>Reference: <strong>{{ bookingReference() }}</strong></p>
+        <p>
+          Reference: <strong>{{ response() }}</strong>
+        </p>
         <a mat-button routerLink="/">Back to Search</a>
       </div>
     } @else {
@@ -16,14 +18,20 @@
         <h2>Flight Details</h2>
         <p><strong>Airline:</strong> {{ flight.provider }}</p>
         <p><strong>Flight:</strong> {{ flight.flightNumber }}</p>
-        <p><strong>Departure:</strong> {{ flight.departureTime | date:'medium' }}</p>
-        <p><strong>Arrival:</strong> {{ flight.arrivalTime | date:'medium' }}</p>
+        <p><strong>Departure:</strong> {{ flight.departureTime | date: 'medium' }}</p>
+        <p><strong>Arrival:</strong> {{ flight.arrivalTime | date: 'medium' }}</p>
         <p><strong>Duration:</strong> {{ flight.durationMinutes | minutesToDuration }}</p>
         <p><strong>Cabin Class:</strong> {{ flight.cabinClass }}</p>
 
         <h2>Price Breakdown</h2>
-        <p>{{ flight.pricePerPassenger | currency:'USD' }} × {{ passengers }} passenger{{ passengers > 1 ? 's' : '' }}</p>
-        <p class="total-price"><strong>Total: {{ flight.totalPrice | currency:'USD' }}</strong></p>
+        <p>
+          {{ flight.pricePerPassenger | currency: 'USD' }} × {{ passengers }} passenger{{
+            passengers > 1 ? 's' : ''
+          }}
+        </p>
+        <p class="total-price">
+          <strong>Total: {{ flight.totalPrice | currency: 'USD' }}</strong>
+        </p>
       </div>
 
       <div class="form-section">
@@ -37,7 +45,9 @@
                 <mat-form-field>
                   <mat-label>Full Name</mat-label>
                   <input matInput formControlName="fullName" placeholder="Enter full name" />
-                  @if (group.get('fullName')?.hasError('required') && group.get('fullName')?.touched) {
+                  @if (
+                    group.get('fullName')?.hasError('required') && group.get('fullName')?.touched
+                  ) {
                     <mat-error>Full name is required</mat-error>
                   }
                 </mat-form-field>
@@ -55,8 +65,15 @@
 
                 <mat-form-field>
                   <mat-label>{{ documentTypeLabel }}</mat-label>
-                  <input matInput formControlName="documentNumber" placeholder="Enter document number" />
-                  @if (group.get('documentNumber')?.hasError('required') && group.get('documentNumber')?.touched) {
+                  <input
+                    matInput
+                    formControlName="documentNumber"
+                    placeholder="Enter document number"
+                  />
+                  @if (
+                    group.get('documentNumber')?.hasError('required') &&
+                    group.get('documentNumber')?.touched
+                  ) {
                     <mat-error>{{ documentTypeLabel }} is required</mat-error>
                   }
                 </mat-form-field>
@@ -76,7 +93,11 @@
           @if (loading()) {
             <mat-spinner diameter="20" />
           }
-          <button matButton="filled" [disabled]="bookingForm.invalid || loading()" (click)="confirmBooking()">
+          <button
+            matButton="filled"
+            [disabled]="bookingForm.invalid || loading()"
+            (click)="confirmBooking()"
+          >
             Confirm Booking
           </button>
         </div>
