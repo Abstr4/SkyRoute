@@ -41,6 +41,7 @@ namespace SkyRoute.API.Controllers
 
             _logger.LogInformation(
                 "Flight search returned {Count} result(s)", result.Value!.Count);
+
             return Ok(result.Value);
         }
     }
