@@ -19,7 +19,7 @@ public sealed class FlightSearchService : IFlightSearchService
         _logger = logger;
     }
 
-    public Result<IReadOnlyList<FlightSearchResponse>> Search(FlightSearchRequest request)
+    public async Task<Result<IReadOnlyList<FlightSearchResponse>>> Search(FlightSearchRequest request)
     {
         var validator = new FlightSearchRequestValidator();
         var validation = validator.Validate(request);
@@ -34,20 +34,17 @@ public sealed class FlightSearchService : IFlightSearchService
         var utcStart = TimeZoneInfo.ConvertTimeToUtc(localStart, tz);
         var utcEnd = TimeZoneInfo.ConvertTimeToUtc(localEnd, tz);
 
-        var offers = new List<FlightOffer>();
-
-        foreach (var provider in _providers)
+        var providerTasks = _providers.Select(provider =>
         {
             _logger.LogDebug(
                 "Querying {Provider} for flights {Origin}->{Destination}",
                 provider.ProviderName, request.OriginAirportCode, request.DestinationAirportCode);
 
-            var providerOffers = provider.Search(request, utcStart, utcEnd);
-            offers.AddRange(providerOffers);
+            return provider.Search(request, utcStart, utcEnd);
+        });
 
-            _logger.LogDebug(
-                "{Provider} returned {Count} flight(s)", provider.ProviderName, providerOffers.Count);
-        }
+        var results = await Task.WhenAll(providerTasks);
+        var offers = results.SelectMany(r => r).ToList();
 
         _logger.LogInformation(
             "Flight search completed: {Total} offer(s) from {ProviderCount} provider(s)",

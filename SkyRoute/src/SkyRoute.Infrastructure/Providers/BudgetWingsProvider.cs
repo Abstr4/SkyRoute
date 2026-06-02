@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Flights;
@@ -9,19 +10,24 @@ namespace SkyRoute.Infrastructure.Providers;
 public sealed class BudgetWingsProvider : IFlightProvider
 {
     private const decimal MinimumPrice = 29.99m;
+    private readonly SkyRouteDbContext _context;
     private readonly ILogger<BudgetWingsProvider> _logger;
 
-    public BudgetWingsProvider(ILogger<BudgetWingsProvider> logger)
+    public BudgetWingsProvider(
+        SkyRouteDbContext context,
+        ILogger<BudgetWingsProvider> logger)
     {
+        _context = context;
         _logger = logger;
     }
 
     public string ProviderName => "BudgetWings";
 
-    public IReadOnlyCollection<FlightOffer> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
+    public async Task<IReadOnlyCollection<FlightOffer>> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
     {
-        var results = MockDataStore.BudgetWingsFlights
-            .Where(f => f.OriginAirport.Code == request.OriginAirportCode
+        var flights = await _context.Flights
+            .Where(f => f.Provider == "BudgetWings"
+                     && f.OriginAirport.Code == request.OriginAirportCode
                      && f.DestinationAirport.Code == request.DestinationAirportCode
                      && f.DepartureTime >= utcStart
                      && f.DepartureTime < utcEnd
@@ -37,19 +43,20 @@ public sealed class BudgetWingsProvider : IFlightProvider
                 CabinClass = f.CabinClass,
                 PricePerPassenger = CalculatePrice(f.BaseFare),
             })
-            .ToList();
+            .ToListAsync();
 
         _logger.LogDebug(
             "BudgetWings search {Origin}->{Destination}: {Count} result(s)",
-            request.OriginAirportCode, request.DestinationAirportCode, results.Count);
+            request.OriginAirportCode, request.DestinationAirportCode, flights.Count);
 
-        return results;
+        return flights;
     }
 
-    public FlightOffer? GetByFlightNumber(string flightNumber)
+    public async Task<FlightOffer?> GetByFlightNumber(string flightNumber)
     {
-        var flight = MockDataStore.BudgetWingsFlights
-            .FirstOrDefault(f => f.FlightNumber == flightNumber);
+        var flight = await _context.Flights
+            .FirstOrDefaultAsync(f => f.Provider == "BudgetWings" && f.FlightNumber == flightNumber);
+
         if (flight is null)
         {
             _logger.LogWarning("BudgetWings flight not found: {FlightNumber}", flightNumber);

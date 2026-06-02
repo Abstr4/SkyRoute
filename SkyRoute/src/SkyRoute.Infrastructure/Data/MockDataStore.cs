@@ -6,13 +6,12 @@ public static class MockDataStore
 {
     public static IReadOnlyList<Airport> Airports { get; } = CreateAirports();
 
-    public static readonly List<Booking> Bookings = new();
+    private static IReadOnlyList<Flight> BudgetWingsFlights { get; } = CreateBudgetWingsFlights();
 
-    public static readonly string[] CabinClasses = ["Economy", "Business", "FirstClass"];
+    private static IReadOnlyList<Flight> GlobalAirFlights { get; } = CreateGlobalAirFlights();
 
-    public static IReadOnlyList<Flight> BudgetWingsFlights { get; } = CreateBudgetWingsFlights();
-
-    public static IReadOnlyList<Flight> GlobalAirFlights { get; } = CreateGlobalAirFlights();
+    public static IReadOnlyList<Flight> GetAllFlights() =>
+        [.. BudgetWingsFlights, .. GlobalAirFlights];
 
     private static IReadOnlyList<Airport> CreateAirports() =>
     [

@@ -1,6 +1,7 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormArray, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -100,16 +101,15 @@ export class Booking {
 
     const body: CreateBookingRequest = this.buildBookingRequest(passengerForms);
 
-    this.bookingService.confirmBooking(body).subscribe({
-      next: (data) => {
-        this.bookingReference.set(data.bookingReferenceCode);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        this.errorMessage.set(err.error?.error ?? 'Booking failed. Please try again.');
-        this.loading.set(false);
-      },
-    });
+    try {
+      const data = await firstValueFrom(this.bookingService.confirmBooking(body));
+      this.bookingReference.set(data.bookingReferenceCode);
+    } catch (err: unknown) {
+      const error = err as { error?: { error?: string } };
+      this.errorMessage.set(error.error?.error ?? 'Booking failed. Please try again.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   private buildBookingRequest(passengerForms: { fullName: string; email: string; documentNumber: string; }[]): CreateBookingRequest {

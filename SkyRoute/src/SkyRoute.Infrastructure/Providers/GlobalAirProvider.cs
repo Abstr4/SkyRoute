@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Flights;
@@ -8,19 +9,24 @@ namespace SkyRoute.Infrastructure.Providers;
 
 public sealed class GlobalAirProvider : IFlightProvider
 {
+    private readonly SkyRouteDbContext _context;
     private readonly ILogger<GlobalAirProvider> _logger;
 
-    public GlobalAirProvider(ILogger<GlobalAirProvider> logger)
+    public GlobalAirProvider(
+        SkyRouteDbContext context,
+        ILogger<GlobalAirProvider> logger)
     {
+        _context = context;
         _logger = logger;
     }
 
     public string ProviderName => "GlobalAir";
 
-    public IReadOnlyCollection<FlightOffer> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
+    public async Task<IReadOnlyCollection<FlightOffer>> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
     {
-        var results = MockDataStore.GlobalAirFlights
-            .Where(f => f.OriginAirport.Code == request.OriginAirportCode
+        var flights = await _context.Flights
+            .Where(f => f.Provider == "GlobalAir"
+                     && f.OriginAirport.Code == request.OriginAirportCode
                      && f.DestinationAirport.Code == request.DestinationAirportCode
                      && f.DepartureTime >= utcStart
                      && f.DepartureTime < utcEnd
@@ -36,19 +42,20 @@ public sealed class GlobalAirProvider : IFlightProvider
                 CabinClass = f.CabinClass,
                 PricePerPassenger = CalculatePrice(f.BaseFare),
             })
-            .ToList();
+            .ToListAsync();
 
         _logger.LogDebug(
             "GlobalAir search {Origin}->{Destination}: {Count} result(s)",
-            request.OriginAirportCode, request.DestinationAirportCode, results.Count);
+            request.OriginAirportCode, request.DestinationAirportCode, flights.Count);
 
-        return results;
+        return flights;
     }
 
-    public FlightOffer? GetByFlightNumber(string flightNumber)
+    public async Task<FlightOffer?> GetByFlightNumber(string flightNumber)
     {
-        var flight = MockDataStore.GlobalAirFlights
-            .FirstOrDefault(f => f.FlightNumber == flightNumber);
+        var flight = await _context.Flights
+            .FirstOrDefaultAsync(f => f.Provider == "GlobalAir" && f.FlightNumber == flightNumber);
+
         if (flight is null)
         {
             _logger.LogWarning("GlobalAir flight not found: {FlightNumber}", flightNumber);

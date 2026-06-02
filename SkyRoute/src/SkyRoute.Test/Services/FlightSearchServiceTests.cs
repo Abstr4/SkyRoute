@@ -20,20 +20,20 @@ public sealed class FlightSearchServiceTests
         _provider1 = new Mock<IFlightProvider>();
         _provider2 = new Mock<IFlightProvider>();
 
-        _provider1.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
-        _provider2.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
+        _provider1.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([]);
+        _provider2.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([]);
 
         _service = new FlightSearchService([_provider1.Object, _provider2.Object], Mock.Of<ILogger<FlightSearchService>>());
     }
 
     [Fact]
-    public void Search_MultipleProviders_AggregatesAllOffers()
+    public async Task Search_MultipleProviders_AggregatesAllOffers()
     {
         var request = CreateValidRequest();
-        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("BW101", "BudgetWings")]);
-        _provider2.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("GA102", "GlobalAir")]);
+        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([CreateOffer("BW101", "BudgetWings")]);
+        _provider2.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([CreateOffer("GA102", "GlobalAir")]);
 
-        var result = _service.Search(request);
+        var result = await _service.Search(request);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value!.Count);
@@ -42,12 +42,12 @@ public sealed class FlightSearchServiceTests
     }
 
     [Fact]
-    public void Search_ValidRequest_CalculatesTotalPrice()
+    public async Task Search_ValidRequest_CalculatesTotalPrice()
     {
         var request = CreateValidRequest(passengers: 3);
-        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("BW101", "BudgetWings", 100m)]);
+        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([CreateOffer("BW101", "BudgetWings", 100m)]);
 
-        var result = _service.Search(request);
+        var result = await _service.Search(request);
 
         Assert.True(result.IsSuccess);
         var value = Assert.Single(result.Value!);
@@ -56,25 +56,25 @@ public sealed class FlightSearchServiceTests
     }
 
     [Fact]
-    public void Search_NoProviders_ReturnsEmptyList()
+    public async Task Search_NoProviders_ReturnsEmptyList()
     {
         var emptyService = new FlightSearchService([], Mock.Of<ILogger<FlightSearchService>>());
         var request = CreateValidRequest();
 
-        var result = emptyService.Search(request);
+        var result = await emptyService.Search(request);
 
         Assert.True(result.IsSuccess);
         Assert.Empty(result.Value!);
     }
 
     [Fact]
-    public void Search_SomeProviderReturnsEmpty_StillAggregatesOthers()
+    public async Task Search_SomeProviderReturnsEmpty_StillAggregatesOthers()
     {
         var request = CreateValidRequest();
-        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
-        _provider2.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([CreateOffer("GA102", "GlobalAir")]);
+        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([]);
+        _provider2.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([CreateOffer("GA102", "GlobalAir")]);
 
-        var result = _service.Search(request);
+        var result = await _service.Search(request);
 
         Assert.True(result.IsSuccess);
         var value = Assert.Single(result.Value!);
@@ -82,7 +82,7 @@ public sealed class FlightSearchServiceTests
     }
 
     [Fact]
-    public void Search_OfferIncludesDuration_CalculatedCorrectly()
+    public async Task Search_OfferIncludesDuration_CalculatedCorrectly()
     {
         var request = CreateValidRequest();
         var depart = DateTime.UtcNow.AddDays(1);
@@ -104,9 +104,9 @@ public sealed class FlightSearchServiceTests
             CabinClass = CabinClass.Economy,
             PricePerPassenger = 100m,
         };
-        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([offer]);
+        _provider1.Setup(p => p.Search(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([offer]);
 
-        var result = _service.Search(request);
+        var result = await _service.Search(request);
 
         Assert.True(result.IsSuccess);
         var value = Assert.Single(result.Value!);

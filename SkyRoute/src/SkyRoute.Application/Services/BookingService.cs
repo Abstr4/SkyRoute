@@ -9,20 +9,22 @@ namespace SkyRoute.Application.Services;
 
 public sealed class BookingService : IBookingService
 {
-    private readonly List<Booking> _bookingsDatabase = new();
     private readonly IEnumerable<IFlightProvider> _providers;
+    private readonly IBookingRepository _bookingRepository;
     private readonly ILogger<BookingService> _logger;
     private int _passengerId;
 
     public BookingService(
         IEnumerable<IFlightProvider> providers,
+        IBookingRepository bookingRepository,
         ILogger<BookingService> logger)
     {
         _providers = providers;
+        _bookingRepository = bookingRepository;
         _logger = logger;
     }
 
-    public Result<Booking> ConfirmBooking(CreateBookingRequest request)
+    public async Task<Result<Booking>> ConfirmBooking(CreateBookingRequest request)
     {
         var validator = new CreateBookingRequestValidator();
         var validation = validator.Validate(request);
@@ -41,7 +43,7 @@ public sealed class BookingService : IBookingService
             return Result<Booking>.Failure("Invalid Provider.");
         }
 
-        var selectedFlight = provider.GetByFlightNumber(request.FlightNumber);
+        var selectedFlight = await provider.GetByFlightNumber(request.FlightNumber);
         if (selectedFlight is null)
         {
             _logger.LogWarning(
@@ -51,7 +53,10 @@ public sealed class BookingService : IBookingService
                 $"Flight {request.FlightNumber} from {request.Provider} is no longer available.");
         }
 
-        bool isInternational = !string.Equals(selectedFlight.OriginAirport.CountryCode, selectedFlight.DestinationAirport.CountryCode, StringComparison.OrdinalIgnoreCase);
+        bool isInternational = !string.Equals(
+            selectedFlight.OriginAirport.CountryCode,
+            selectedFlight.DestinationAirport.CountryCode,
+            StringComparison.OrdinalIgnoreCase);
 
         var domainPassengers = new List<Passenger>();
 
@@ -72,9 +77,10 @@ public sealed class BookingService : IBookingService
             CreatePassenger(domainPassengers, passenger);
         }
 
-        Booking flatBooking = CreateBooking(selectedFlight, domainPassengers);
+        var allBookings = await _bookingRepository.GetAllAsync();
+        Booking flatBooking = CreateBooking(selectedFlight, domainPassengers, allBookings.Count);
 
-        _bookingsDatabase.Add(flatBooking);
+        await _bookingRepository.AddAsync(flatBooking);
 
         _logger.LogInformation(
             "Booking confirmed: {ReferenceCode} for {Provider} flight {FlightNumber}",
@@ -95,15 +101,14 @@ public sealed class BookingService : IBookingService
         });
     }
 
-    private Booking CreateBooking(FlightOffer selectedFlight, List<Passenger> domainPassengers)
+    private Booking CreateBooking(FlightOffer selectedFlight, List<Passenger> domainPassengers, int existingCount)
     {
         var flatBooking = new Booking
         {
-            Id = _bookingsDatabase.Count + 1,
+            Id = existingCount + 1,
             ReferenceCode = $"SKY-{Guid.NewGuid().ToString()[..6].ToUpper()}",
             CreatedAtUtc = DateTime.UtcNow,
             Passengers = domainPassengers,
-
             ProviderName = selectedFlight.Provider,
             FlightNumber = selectedFlight.FlightNumber,
             OriginAirportCode = selectedFlight.OriginAirport.Code,
@@ -111,7 +116,6 @@ public sealed class BookingService : IBookingService
             DepartureTime = selectedFlight.DepartureTime,
             ArrivalTime = selectedFlight.ArrivalTime,
             CabinClass = selectedFlight.CabinClass,
-
             PricePerPassenger = selectedFlight.PricePerPassenger,
             TotalPrice = selectedFlight.PricePerPassenger * domainPassengers.Count
         };

@@ -1,9 +1,11 @@
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
 using SkyRoute.API.Exceptions;
 using SkyRoute.Application.Interfaces;
 using SkyRoute.Application.Services;
+using SkyRoute.Infrastructure.Data;
 using SkyRoute.Infrastructure.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,6 +43,9 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 builder.Services.AddOpenApi();
 
+builder.Services.AddDbContext<SkyRouteDbContext>(options =>
+    options.UseInMemoryDatabase("SkyRoute"));
+
 // Individual providers so the IEnumerable<IFlightProvider> collection populates
 builder.Services.AddScoped<IFlightProvider, BudgetWingsProvider>();
 builder.Services.AddScoped<IFlightProvider, GlobalAirProvider>();
@@ -48,6 +53,7 @@ builder.Services.AddScoped<IFlightProvider, GlobalAirProvider>();
 // Application — services
 builder.Services.AddScoped<IFlightSearchService, FlightSearchService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
 var app = builder.Build();
 
@@ -78,5 +84,14 @@ app.UseCors("Angular");
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<SkyRouteDbContext>();
+    context.Database.EnsureDeleted();
+    context.Database.EnsureCreated();
+    context.Flights.AddRange(MockDataStore.GetAllFlights());
+    context.SaveChanges();
+}
 
 app.Run();

@@ -23,7 +23,7 @@ public sealed class FlightsControllerTests
     }
 
     [Fact]
-    public void SearchFlights_ValidRequest_ReturnsOkWithResults()
+    public async Task SearchFlights_ValidRequest_ReturnsOkWithResults()
     {
         var request = new FlightSearchRequest(
             "EZE", "GRU",
@@ -51,9 +51,9 @@ public sealed class FlightsControllerTests
             },
         };
         _searchServiceMock.Setup(s => s.Search(request))
-            .Returns(Result<IReadOnlyList<FlightSearchResponse>>.Success(expected));
+            .ReturnsAsync(Result<IReadOnlyList<FlightSearchResponse>>.Success(expected));
 
-        var result = _controller.SearchFlights(request);
+        var result = await _controller.SearchFlights(request);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var results = Assert.IsAssignableFrom<IReadOnlyList<FlightSearchResponse>>(okResult.Value);
@@ -61,16 +61,16 @@ public sealed class FlightsControllerTests
     }
 
     [Fact]
-    public void SearchFlights_ValidationFailure_ReturnsBadRequest()
+    public async Task SearchFlights_ValidationFailure_ReturnsBadRequest()
     {
         var request = new FlightSearchRequest(
             "EZE", "GRU",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
             1, CabinClass.Economy, "UTC");
         _searchServiceMock.Setup(s => s.Search(request))
-            .Returns(Result<IReadOnlyList<FlightSearchResponse>>.Failure("Invalid timezone."));
+            .ReturnsAsync(Result<IReadOnlyList<FlightSearchResponse>>.Failure("Invalid timezone."));
 
-        var result = _controller.SearchFlights(request);
+        var result = await _controller.SearchFlights(request);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequest.StatusCode);
