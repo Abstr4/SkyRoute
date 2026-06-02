@@ -130,6 +130,7 @@ App (router-outlet)
 
 | Decision | Rationale |
 |----------|-----------|
+| **DI extension methods per layer** | Each layer exposes an `IServiceCollection` extension method (`AddPresentation()`, `AddInfrastructure()`, `AddApplication()`) so `Program.cs` only references layer entry points, not individual types. Registration logic stays co-located with the types it registers; adding a new service in a layer only touches that layer's `DependencyInjection.cs`. |
 | **GET with query params for flight search** | Idempotent, cacheable, bookmarkable. The five scalar parameters fit comfortably in a URL. |
 | **Provider pattern (Strategy)** | New providers added by implementing `IFlightProvider` and registering in DI — zero changes to existing controllers or services. |
 | **4-layer Clean Architecture** | Separates domain logic, use cases, infrastructure, and presentation. Enables unit testing with mocked dependencies at each layer. |
