@@ -10,30 +10,16 @@
 [![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&style=flat-square)](https://dotnet.microsoft.com)
 [![Angular](https://img.shields.io/badge/Angular-21-E13137?logo=angular&style=flat-square)](https://angular.dev)
 
-[Overview](#overview) • [Features](#features) • [Getting Started](#getting-started) • [Architecture](#architecture) • [API](#api) • [Project Structure](#project-structure) • [Design Decisions](#design-decisions) • [Known Limitations](#known-limitations)
-
 ---
 
 ## Overview
 
-SkyRoute aggregates flight offers from multiple airline providers and lets users search, compare, and book in a single interface. Built as a demonstration monorepo with two projects:
+SkyRoute aggregates flight offers from multiple airline providers and lets users search, compare, and book in a single interface. A monorepo with two projects:
 
-- **SkyRoute** — a .NET 10 ASP.NET Core Web API following Clean Architecture
-- **SkyRoute.UI** — an Angular 21 SPA using standalone components, Angular Material, signals, and reactive forms
+- **SkyRoute** — a .NET 10 ASP.NET Core Web API (Clean Architecture)
+- **SkyRoute.UI** — an Angular 21 SPA (standalone components, Angular Material, signals)
 
 Flights are served from an in-memory data store with two mock providers (BudgetWings and GlobalAir), each applying their own pricing rules. The frontend provides a three-step flow: search → results → booking, with dynamic document validation based on whether the route is domestic or international.
-
----
-
-## Features
-
-- **Multi-provider aggregation** — searches across all registered providers and merges results into a single response
-- **Provider-agnostic pricing engine** — each provider implements its own pricing strategy via a shared interface
-- **Interactive flight search** — origin, destination, date, passenger count, and cabin class selection
-- **Client-side sorting** — sort results by price (asc/desc), duration, or departure time without additional API calls
-- **Dynamic document validation** — detects international vs domestic routes and adjusts the required document type (passport or national ID)
-- **Reactive booking form** — dynamic passenger forms with per-person validation
-- **OpenAPI UI** — interactive API reference at `/scalar/v1` using Scalar (development only)
 
 ---
 
@@ -42,8 +28,8 @@ Flights are served from an in-memory data store with two mock providers (BudgetW
 ### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Bun](https://bun.sh) (package manager & runtime)
-- Node.js 20+ _(required by Angular tooling)_
+- [Bun](https://bun.sh)
+- Node.js 20+
 
 ### Run the API
 
@@ -52,7 +38,7 @@ cd SkyRoute/src/SkyRoute.API
 dotnet run --launch-profile https
 ```
 
-The API starts on `https://localhost:7229`. Open `https://localhost:7229/scalar/v1` in a browser to explore the API interactively.
+The API starts on `https://localhost:7229`. Open `/scalar/v1` in a browser for the interactive API reference (development only).
 
 ### Run the UI
 
@@ -62,22 +48,24 @@ bun install
 bun start
 ```
 
-The UI starts on `http://localhost:4200`. The CORS policy only allows this origin.
+Opens at `http://localhost:4200`. The CORS policy only allows this origin.
 
 > [!NOTE]
-> The frontend hardcodes the API URL to `https://localhost:7229` (the HTTPS port from the backend's `launchSettings.json`). If you change the backend port, update the URL in the frontend services.
+> The frontend hardcodes the API URL to `https://localhost:7229`. If you change the backend port, update `SkyRoute.UI/src/environments/environment*.ts`.
 
-### Run tests
+### Run Tests
 
 ```bash
-# Backend tests (xUnit + Moq)
-cd SkyRoute/src/SkyRoute.Test
-dotnet test
+# Backend (xUnit + Moq)
+dotnet test SkyRoute/src/SkyRoute.Test
 
-# Frontend tests (Vitest)
-cd SkyRoute.UI
-bun test
+# Frontend (Vitest)
+cd SkyRoute.UI && bun test
 ```
+
+### Test scenarios
+
+The [SkyRoute.http](SkyRoute/src/SkyRoute.API/SkyRoute.http) file contains a comprehensive set of test cases covering flight search (valid routes, empty results, validation errors) and booking (domestic/international document rules, provider errors).
 
 ---
 
@@ -86,12 +74,10 @@ bun test
 ### Backend — 4-layer Clean Architecture
 
 ```
-          SkyRoute.Domain          — models, enums (zero dependencies)
-                 │
-      SkyRoute.Application     — interfaces (ports), services (use cases), DTOs, contracts
-          ╱               ╲
-         ╱                 ╲
-        ╱                   ╲
+SkyRoute.Domain             — models, enums (zero dependencies)
+       │
+SkyRoute.Application        — interfaces (ports), services (use cases), DTOs
+    ╱              ╲
 SkyRoute.Infrastructure     SkyRoute.API
 (providers, data store)     (controllers, DI composition root)
 ```
@@ -99,200 +85,44 @@ SkyRoute.Infrastructure     SkyRoute.API
 | Layer | Responsibility |
 |-------|---------------|
 | **Domain** | Core business models (`Airport`, `Flight`, `Booking`, `Passenger`) and enums (`CabinClass`, `DocumentType`). No project dependencies. |
-| **Application** | Service interfaces (`IFlightSearchService`, `IBookingService`), use-case implementations (`FlightSearchService`, `BookingService`), the `IFlightProvider` contract, request/response DTOs. Depends only on Domain. |
-| **Infrastructure** | Concrete provider implementations (`BudgetWingsProvider`, `GlobalAirProvider`), the `MockDataStore` with hardcoded airports and flights. Depends only on Application. |
-| **API** | ASP.NET controllers (`FlightsController`, `BookingController`), DI registration, CORS, and middleware. Composition root that wires everything together. |
+| **Application** | Service interfaces, use-case implementations, the `IFlightProvider` contract, request/response DTOs. Depends only on Domain. |
+| **Infrastructure** | Concrete provider implementations (`BudgetWingsProvider`, `GlobalAirProvider`), the `MockDataStore`, mappers. Depends only on Application. |
+| **API** | ASP.NET controllers, DI registration, CORS, middleware. The composition root. |
 
 #### Provider pattern
 
-The `IFlightProvider` interface defines `Search()` and `GetByFlightNumber()` methods. Each provider registers as a scoped `IFlightProvider` service in `Program.cs`. `FlightSearchService` receives `IEnumerable<IFlightProvider>` via DI and iterates over all registered providers for every search query — adding a new provider requires only implementing the interface and registering it.
+`IFlightProvider` defines `Search()` and `GetByFlightNumber()`. Each provider registers as a scoped service; `FlightSearchService` receives `IEnumerable<IFlightProvider>` via DI and iterates over all registered providers. Adding a new airline requires only implementing the interface and registering it in `Program.cs`.
 
 **Pricing rules:**
 
-- **BudgetWings:** `max(baseFare × 0.9, 29.99)` — 10% discount, minimum $29.99 per passenger
-- **GlobalAir:** `baseFare × 1.15` — 15% fuel surcharge, rounded to 2 decimal places
+- **BudgetWings:** `max(baseFare × 0.9, 29.99)` — 10% discount, $29.99 minimum
+- **GlobalAir:** `baseFare × 1.15` — 15% fuel surcharge, 2-decimal rounding
 
 #### Mock data
 
 | Data | Count |
 |------|-------|
-| Airports | 8 (Argentina, Brazil, Chile, Peru) |
+| Airports | 8 (4 countries) |
 | BudgetWings flights | 14 |
 | GlobalAir flights | 15 |
 
-Flights span **today**, **tomorrow**, and **3 days from now** across multiple routes. Each provider applies **`f.DepartureTime > DateTimeOffset.UtcNow`** so expired flights are never returned — simulating real-world provider behavior.
-
-Flight IDs are not unique across providers (both start at 1). The `BookingService` validates document types against route internationality by comparing the `CountryCode` string field.
+Flights span today, tomorrow, and 3 days ahead across multiple routes. Providers filter departed flights (`DepartureTime > DateTimeOffset.UtcNow`) so expired flights are never returned.
 
 ### Frontend — Component tree and data flow
 
 ```
 App (router-outlet)
- ├── FlightSearchComponent    /   — search form, submits GET /api/Flights
- ├── Flights                  /flights   — results table with MatSort
- └── Booking                  /booking   — dynamic passenger forms, submits POST /api/Booking
+ ├── FlightSearchComponent   /       — search form, navigates to /flights with query params
+ ├── Flights                 /flights — results table with MatSort, client-side sorting
+ └── Booking                 /booking — dynamic passenger forms with document-type validation
 ```
 
-Data is passed between pages through **URL query parameters** where possible, and **router state** only where necessary:
-
-1. `FlightSearchComponent` collects form values and navigates to `/flights?originAirportCode=...&destinationAirportCode=...&departureDate=...&passengers=...&cabinClass=...&timeZone=...`
-2. `Flights` reads the query parameters, calls `GET /api/Flights`, and displays results in a `MatTable` with client-side sorting; on selection navigates to `/booking` with `{ flight, passengers }` in router state
-3. `Booking` renders the flight summary, price breakdown, and dynamic passenger forms; after successful submission displays the booking reference code
+1. **FlightSearchComponent** collects form values and navigates to `/flights?originAirportCode=...&destinationAirportCode=...&departureDate=...&passengers=...&cabinClass=...&timeZone=...`
+2. **Flights** reads query params, calls `GET /api/Flights`, displays a `MatTable` with client-side sorting; on selection, navigates to `/booking` with the flight in router state
+3. **Booking** renders the flight summary, price breakdown, and dynamic passenger forms; after successful submission, displays the booking reference code
 
 > [!TIP]
-> Search query parameters in the URL survive page refresh. The `Flights` component re-fetches results from the API when the page loads. Refresh on `/booking` still loses the selected flight state, however.
-
----
-
-## API
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| `GET` | `/api/Flights` | Search available flights |
-| `POST` | `/api/Booking` | Confirm a booking |
-| `GET` | `/scalar/v1` | Scalar API reference (dev only) |
-
-### `GET /api/Flights`
-
-**Query parameters:**
-
-| Parameter | Type | Required | Example |
-|-----------|------|----------|---------|
-| `originAirportCode` | `string` | yes | `EZE` |
-| `destinationAirportCode` | `string` | yes | `GRU` |
-| `departureDate` | `string` (ISO date) | yes | `2026-06-15` |
-| `passengers` | `int` | yes | `2` |
-| `cabinClass` | `string` | yes | `Economy` |
-| `timeZone` | `string` (IANA) | yes | `America/Argentina/Cordoba` |
-
-The `timeZone` parameter is required. The backend converts the user's local day into UTC boundaries and filters flights against them. Use [IANA timezone names](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g., `UTC`, `America/Argentina/Cordoba`, `America/Sao_Paulo`).
-
-**Example request:**
-
-```
-GET /api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate=2026-06-15&passengers=2&cabinClass=Economy&timeZone=UTC
-```
-
-**Response:** `200 OK`
-
-```json
-[
-  {
-    "provider": "BudgetWings",
-    "flightNumber": "BW404",
-    "originAirport": { "code": "EZE", "name": "...", "city": "Buenos Aires", "country": "Argentina", "countryCode": "AR" },
-    "destinationAirport": { "code": "GRU", "name": "...", "city": "São Paulo", "country": "Brazil", "countryCode": "BR" },
-    "departureTime": "2026-06-15T07:00:00Z",
-    "arrivalTime": "2026-06-15T10:15:00Z",
-    "durationMinutes": 195,
-    "cabinClass": "Economy",
-    "pricePerPassenger": 108.00,
-    "totalPrice": 216.00
-  }
-]
-```
-
-### Test Scenarios
-
-All examples use `timeZone=UTC` unless noted. Replace `departureDate` with the appropriate relative date.
-
-#### Search — flights expected
-
-| # | Scenario | Query | Expected |
-|---|----------|-------|----------|
-| 1 | **COR→MDZ today** (10 flights, 5 per provider) | `origin=COR&dest=MDZ&date=today&tz=America/Argentina/Cordoba` | 7-10 results (some morning flights may expire depending on time of day) |
-| 2 | **EZE→GRU tomorrow** (4 flights, 2 per provider) | `origin=EZE&dest=GRU&date=tomorrow&tz=UTC` | 4 results (BW404, BW408, GA401, GA402) |
-| 3 | **GRU→EZE tomorrow** (4 flights, 2 per provider) | `origin=GRU&dest=EZE&date=tomorrow&tz=UTC` | 4 results (BW707, BW708, GA305, GA306) |
-| 4 | **EZE→SCL in 3 days** (3 flights, 1 BW + 2 GA) | `origin=EZE&dest=SCL&date=in+3+days&tz=UTC` | 3 results (BW505, GA510, GA511) |
-| 5 | **EZE→COR today** (1 flight) | `origin=EZE&dest=COR&date=today&tz=UTC` | 1 result (BW101) |
-| 6 | **GRU→GIG today** (1 flight) | `origin=GRU&dest=GIG&date=today&tz=UTC` | 1 result (GA102) |
-| 7 | **EZE→MDZ today** (1 flight) | `origin=EZE&dest=MDZ&date=today&tz=UTC` | 1 result (BW202, may be expired after 12:10 UTC) |
-
-#### Search — empty / error responses
-
-| # | Scenario | Query | Expected |
-|---|----------|-------|----------|
-| 8 | **Past date** (yesterday) | `origin=COR&dest=MDZ&date=yesterday&tz=UTC` | `400 Bad Request` — date cannot be in the past |
-| 9 | **Same origin and destination** | `origin=EZE&dest=EZE&date=tomorrow&tz=UTC` | `400 Bad Request` — airports cannot be the same |
-| 10 | **Invalid timezone** | `origin=EZE&dest=GRU&date=tomorrow&tz=Foo/Bar` | `400 Bad Request` — invalid timezone |
-| 11 | **Unknown route** (no flights) | `origin=AEP&dest=LIM&date=today&tz=UTC` | `200 OK` — empty array `[]` |
-| 12 | **Far future** (no flights scheduled) | `origin=EZE&dest=GRU&date=in+30+days&tz=UTC` | `200 OK` — empty array `[]` |
-| 13 | **Date with no matching flights** | `origin=GIG&dest=LIM&date=today&tz=UTC` | `200 OK` — empty array `[]` |
-| 14 | **All flights expired today** | `origin=EZE&dest=COR&date=today&tz=UTC` (test after 08:10 UTC) | `200 OK` — empty array (BW101 already departed) |
-
-#### Booking — success scenarios
-
-| # | Scenario | Body | Expected |
-|---|----------|------|----------|
-| 15 | **Domestic route** (COR→MDZ) | `{ provider: "BudgetWings", flightNumber: "BW310", passengers: [{ fullName: "Jane Doe", email: "jane@test.com", documentType: "NationalId", documentNumber: "12345678" }] }` | `201 Created` — `{ bookingReferenceCode: "SKY-..." }` |
-| 16 | **International route** (EZE→GRU) | `{ provider: "BudgetWings", flightNumber: "BW404", passengers: [{ fullName: "Jane Doe", email: "jane@test.com", documentType: "Passport", documentNumber: "AB123456" }] }` | `201 Created` |
-
-#### Booking — error scenarios
-
-| # | Scenario | Body | Expected |
-|---|----------|------|----------|
-| 17 | **Domestic route with Passport** (COR→MDZ) | `{ provider: "BudgetWings", flightNumber: "BW310", passengers: [{ ..., documentType: "Passport" }] }` | `400 Bad Request` — must provide a National ID for domestic routes |
-| 18 | **International route with NationalId** (EZE→GRU) | `{ provider: "BudgetWings", flightNumber: "BW404", passengers: [{ ..., documentType: "NationalId" }] }` | `400 Bad Request` — must provide a Passport for international routes |
-| 19 | **Invalid provider** | `{ provider: "FakeAir", flightNumber: "BW101" }` | `400 Bad Request` |
-| 20 | **Invalid flight number** | `{ provider: "BudgetWings", flightNumber: "FAKE" }` | `400 Bad Request` |
-
-### `POST /api/Booking`
-
-**Request body:**
-
-```json
-{
-  "provider": "BudgetWings",
-  "flightNumber": "BW404",
-  "passengers": [
-    {
-      "fullName": "Jane Doe",
-      "email": "jane@example.com",
-      "documentType": "Passport",
-      "documentNumber": "AB123456"
-    }
-  ]
-}
-```
-
-The `documentType` must be `Passport` for international routes and `NationalId` for domestic routes.
-
-**Response:** `201 Created`
-
-```json
-{
-  "bookingReferenceCode": "SKY-A1B2C3"
-}
-```
-
----
-
-## Project Structure
-
-```
-├── SkyRoute/                         # .NET 10 backend
-│   ├── SkyRoute.slnx
-│   └── src/
-│       ├── SkyRoute.Domain/          # Models, enums (zero deps)
-│       ├── SkyRoute.Application/     # Interfaces, services, DTOs, contracts
-│       ├── SkyRoute.Infrastructure/  # Providers, MockDataStore, mappers
-│       ├── SkyRoute.API/             # Controllers, Program.cs, DI
-│       └── SkyRoute.Test/            # xUnit + Moq unit tests
-│
-├── SkyRoute.UI/                      # Angular 21 frontend
-│   └── src/app/
-│       ├── app.ts / app.html / app.css       # Root shell
-│       ├── app.config.ts                     # App configuration
-│       ├── app.routes.ts                     # Route definitions
-│       ├── flight-search/                     # Search form page
-│       ├── flights/                           # Results table page
-│       ├── booking/                           # Booking form page
-│       ├── models/                            # Shared interfaces, constants
-│       └── services/                          # API service classes
-│
-├── specs/                             # Original challenge specification
-└── AGENTS.md                          # Agent instructions (this file)
-```
+> Search query parameters survive page refresh — the Flights component re-fetches from the API. Navigating to `/booking` directly (or refreshing) loses the selected flight.
 
 ---
 
@@ -300,27 +130,48 @@ The `documentType` must be `Passport` for international routes and `NationalId` 
 
 | Decision | Rationale |
 |----------|-----------|
-| **GET with query params for flight search** | Search queries on a resource collection should be GET — idempotent, cacheable, bookmarkable. The five scalar parameters fit comfortably in a URL. The original implementation used POST but was changed to align with REST conventions and the spec. |
-| **Provider pattern (Strategy)** | `IFlightProvider` lets new airlines be added by implementing a single interface and registering in DI — zero changes to existing services or controllers. |
-| **4-layer Clean Architecture** | Separates domain logic (Domain), use cases (Application), infrastructure concerns (Infrastructure), and presentation (API). Enables unit testing with mocked dependencies. |
-| **Query params for search, router state for booking** | The flight search flow uses URL query parameters so results are bookmarkable and survive page refresh. The booking flow (selected flight + passenger count) uses router state since it's a transient selection that naturally expires on refresh — the user can always re-search. |
-| **`HttpClient` with `provideHttpClient(withFetch())`** | Uses Angular's standard HTTP client with the modern fetch-based adapter. Provides centralized error handling, typed responses, and integrates with RxJS via `Observable`. The `FlightSearchService` encapsulates all API calls, keeping components framework-aware but not HTTP-aware. |
-| **All DI in `Program.cs`** | Keeps the composition root explicit and visible in a single file. As the project grows, `DependencyInjection.cs` extension methods per layer would be cleaner. |
-| **Scalar over Swagger** | Scalar provides a more modern, readable API reference UI. Integrated via `Scalar.AspNetCore` with deep-space theme. |
-| **In-memory data store** | Zero setup, no database dependency. Adequate for a demo — but all data resets on server restart, and concurrent access uses no synchronization. |
-| **Timezone-aware day boundaries** | The backend converts the user's IANA timezone to UTC day boundaries before querying flights. This prevents local-midnight vs UTC-midnight mismatches that caused false "past date" rejections for users in negative-offset timezones. |
-| **Provider expiry filtering** | Providers filter out flights with `DepartureTime <= DateTimeOffset.UtcNow`, matching real-world behavior where airline APIs never return departed flights. Combined with the controller's past-date validation, this ensures only bookable flights are returned. |
+| **GET with query params for flight search** | Idempotent, cacheable, bookmarkable. The five scalar parameters fit comfortably in a URL. |
+| **Provider pattern (Strategy)** | New providers added by implementing `IFlightProvider` and registering in DI — zero changes to existing controllers or services. |
+| **4-layer Clean Architecture** | Separates domain logic, use cases, infrastructure, and presentation. Enables unit testing with mocked dependencies at each layer. |
+| **Query params for search, router state for booking** | Search results survive page refresh; the selected flight is transient and naturally expires. |
+| **Timezone-aware day boundaries** | The backend converts the user's IANA timezone to UTC boundaries before querying flights, preventing false "past date" rejections for users in negative-offset timezones. |
+| **Result pattern + global exception handler** | `Result<T>` return types keep expected failures (validation, not-found) explicit in the domain layer rather than throwing exceptions for control flow. The `GlobalExceptionHandler` catches remaining unexpected exceptions and returns structured `application/problem+json` responses. |
+| **`IExceptionHandler` over custom middleware** | Uses the built-in `IExceptionHandler` API registered via `AddExceptionHandler<T>()` instead of a custom middleware pipeline — produces `ProblemDetails` out of the box, aligning with RFC 9457 problem response conventions. |
+| **Scalar over Swagger** | A more modern, readable API reference UI with minimal configuration via `Scalar.AspNetCore`. |
 
 ---
 
 ## Known Limitations
 
 - **Flight ID collision** — Both providers use overlapping numeric IDs (1..N). IDs are unique only within a provider, not globally.
-- **No pagination** — Flight search returns all matching results. With more providers or routes, this would need pagination or filtering.
-- **`timeZone` is required** — The search endpoint requires an IANA timezone. The frontend sends `Intl.DateTimeFormat().resolvedOptions().timeZone` automatically. Manual API callers must include a valid timezone parameter.
-- **Booking state lost on refresh** — Router state for the selected flight doesn't survive a page refresh on `/booking`. Navigating to `/booking` directly redirects home. Search query params in `/flights` survive refresh and results are re-fetched from the API.
-- **Hardcoded API URL** — The frontend uses `https://localhost:7229` in both `environment.ts` and `environment.development.ts`, so there is no per-environment switching.
-- **Backend state is ephemeral** — Bookings are stored in a private `List<Booking>` inside `BookingService` and are lost on restart.
-- **CORS restricted to `localhost:4200`** — The policy is hardcoded for the Angular dev server. Any other client must be added explicitly.
-- **No centralized loading/error handling** — Loading and error states are managed independently per component without a shared interceptor or global handler.
+- **No pagination** — Flight search returns all matching results. Would need pagination for larger datasets.
+- **`timeZone` is required** — The search endpoint requires an IANA timezone. The frontend sends `Intl.DateTimeFormat().resolvedOptions().timeZone` automatically; manual API callers must include one.
+- **Booking state lost on refresh** — Router state on `/booking` doesn't survive a page refresh. Navigating to `/booking` directly redirects home.
+- **Hardcoded API URL** — The frontend uses `https://localhost:7229` in all environments. No per-environment switching.
+- **Backend state is ephemeral** — Bookings are stored in a private `List<Booking>` inside `BookingService` and are lost on server restart.
+- **CORS restricted to `localhost:4200`** — Hardcoded for the Angular dev server. Any other client must be added explicitly.
+- **Logging in controllers, not filters** — `ILogger<T>` is injected directly into controllers. Extracting cross-cutting concerns into action filters (or a CQRS pipeline with behaviors) would be cleaner.
+- **No async I/O** — All data is served from a static in-memory `MockDataStore`; there are no `async` code paths. A separate branch is in progress to replace it with EF Core InMemory and true async operations.
 
+---
+
+## Project Structure
+
+```
+├── SkyRoute/                     # .NET 10 backend
+│   └── src/
+│       ├── SkyRoute.Domain/      # Models, enums (zero deps)
+│       ├── SkyRoute.Application/ # Interfaces, services, DTOs
+│       ├── SkyRoute.Infrastructure/ # Providers, data store, mappers
+│       ├── SkyRoute.API/         # Controllers, Program.cs, DI
+│       └── SkyRoute.Test/        # xUnit + Moq unit tests
+├── SkyRoute.UI/                  # Angular 21 frontend
+│   └── src/app/
+│       ├── flight-search/        # Search form page
+│       ├── flights/              # Results table page
+│       ├── booking/              # Booking form page
+│       ├── services/             # API service classes
+│       └── models/               # Shared interfaces, constants
+├── specs/                        # Original challenge specification
+└── AGENTS.md
+```
