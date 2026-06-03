@@ -21,7 +21,7 @@ namespace SkyRoute.API.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(CreateBookingResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<FlightSearchResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public IActionResult SearchFlights([FromQuery] FlightSearchRequest request)
