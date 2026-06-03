@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.Extensions.Logging;
 using SkyRoute.Application.Common;
 using SkyRoute.Application.DTOs;
@@ -9,20 +10,22 @@ namespace SkyRoute.Application.Services;
 public sealed class FlightSearchService : IFlightSearchService
 {
     private readonly IEnumerable<IFlightProvider> _providers;
+    private readonly IValidator<FlightSearchRequest> _validator;
     private readonly ILogger<FlightSearchService> _logger;
 
     public FlightSearchService(
         IEnumerable<IFlightProvider> providers,
+        IValidator<FlightSearchRequest> validator,
         ILogger<FlightSearchService> logger)
     {
         _providers = providers;
+        _validator = validator;
         _logger = logger;
     }
 
     public Result<IReadOnlyList<FlightSearchResponse>> Search(FlightSearchRequest request)
     {
-        var validator = new FlightSearchRequestValidator();
-        var validation = validator.Validate(request);
+        var validation = _validator.Validate(request);
 
         if (!validation.IsValid)
             return Result<IReadOnlyList<FlightSearchResponse>>.Failure(
