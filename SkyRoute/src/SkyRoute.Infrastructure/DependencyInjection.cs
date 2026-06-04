@@ -9,6 +9,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IFlightProvider, BudgetWingsProvider>();
         services.AddScoped<IFlightProvider, GlobalAirProvider>();
+        services.AddScoped<IFlightProvider, SuperCheapestProvider>();
 
         return services;
     }
