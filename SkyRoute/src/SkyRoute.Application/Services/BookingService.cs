@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.Extensions.Logging;
 using SkyRoute.Application.Common;
 using SkyRoute.Application.DTOs;
@@ -10,24 +11,26 @@ namespace SkyRoute.Application.Services;
 public sealed class BookingService : IBookingService
 {
     private readonly IEnumerable<IFlightProvider> _providers;
+    private readonly IValidator<CreateBookingRequest> _validator;
     private readonly IBookingRepository _bookingRepository;
     private readonly ILogger<BookingService> _logger;
     private int _passengerId;
 
     public BookingService(
         IEnumerable<IFlightProvider> providers,
+        IValidator<CreateBookingRequest> validator,
         IBookingRepository bookingRepository,
         ILogger<BookingService> logger)
     {
         _providers = providers;
+        _validator = validator;
         _bookingRepository = bookingRepository;
         _logger = logger;
     }
 
     public async Task<Result<Booking>> ConfirmBooking(CreateBookingRequest request)
     {
-        var validator = new CreateBookingRequestValidator();
-        var validation = validator.Validate(request);
+        var validation = _validator.Validate(request);
         if (!validation.IsValid)
             return Result<Booking>.Failure(validation.Errors.Select(e => e.ErrorMessage));
 

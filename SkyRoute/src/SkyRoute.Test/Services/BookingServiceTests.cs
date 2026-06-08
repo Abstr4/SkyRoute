@@ -1,3 +1,5 @@
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SkyRoute.Application.DTOs;
@@ -12,6 +14,7 @@ namespace SkyRoute.Test.Services;
 public sealed class BookingServiceTests
 {
     private readonly Mock<IFlightProvider> _providerMock;
+    private readonly Mock<IValidator<CreateBookingRequest>> _validatorMock;
     private readonly Mock<IBookingRepository> _bookingRepoMock;
     private readonly BookingService _service;
 
@@ -20,6 +23,13 @@ public sealed class BookingServiceTests
         _providerMock = new Mock<IFlightProvider>();
         _providerMock.Setup(p => p.ProviderName).Returns("BudgetWings");
 
+        _validatorMock = new Mock<IValidator<CreateBookingRequest>>();
+        _validatorMock.Setup(v => v.Validate(It.IsAny<CreateBookingRequest>())).Returns(new ValidationResult());
+
+        _service = new BookingService(
+            [_providerMock.Object],
+            _validatorMock.Object,
+            Mock.Of<ILogger<BookingService>>());
         _bookingRepoMock = new Mock<IBookingRepository>();
         _bookingRepoMock.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
 

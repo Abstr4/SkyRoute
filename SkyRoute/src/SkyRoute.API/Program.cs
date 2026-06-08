@@ -2,6 +2,27 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
 using SkyRoute.Infrastructure.Data;
+using SkyRoute.Application.Interfaces;
+using SkyRoute.Application.Services;
+using SkyRoute.Infrastructure.Providers;
+using SkyRoute.Application.Interfaces;
+using SkyRoute.Application.Services;
+using SkyRoute.Infrastructure.Providers;
+using SkyRoute.Application.Interfaces;
+using SkyRoute.Application.Services;
+using SkyRoute.Infrastructure.Providers;
+using SkyRoute.Application.Interfaces;
+using SkyRoute.Application.Services;
+using SkyRoute.Infrastructure.Providers;
+using SkyRoute.Application.Interfaces;
+using SkyRoute.Application.Services;
+using SkyRoute.Infrastructure.Providers;
+using SkyRoute.Application.Interfaces;
+using SkyRoute.Application.Services;
+using SkyRoute.Infrastructure.Providers;
+using SkyRoute.Application.Interfaces;
+using SkyRoute.Application.Services;
+using SkyRoute.Infrastructure.Providers;
 
 var builder = WebApplication.CreateBuilder(args);
 

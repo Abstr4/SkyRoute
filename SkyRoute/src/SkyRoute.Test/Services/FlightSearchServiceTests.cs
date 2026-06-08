@@ -1,3 +1,5 @@
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SkyRoute.Application.DTOs;
@@ -13,17 +15,23 @@ public sealed class FlightSearchServiceTests
 {
     private readonly Mock<IFlightProvider> _provider1;
     private readonly Mock<IFlightProvider> _provider2;
+    private readonly Mock<IValidator<FlightSearchRequest>> _validatorMock;
     private readonly FlightSearchService _service;
 
     public FlightSearchServiceTests()
     {
         _provider1 = new Mock<IFlightProvider>();
         _provider2 = new Mock<IFlightProvider>();
+        _validatorMock = new Mock<IValidator<FlightSearchRequest>>();
 
-        _provider1.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([]);
-        _provider2.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([]);
+        _provider1.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
+        _provider2.Setup(p => p.Search(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).Returns([]);
+        _validatorMock.Setup(v => v.Validate(It.IsAny<FlightSearchRequest>())).Returns(new ValidationResult());
 
-        _service = new FlightSearchService([_provider1.Object, _provider2.Object], Mock.Of<ILogger<FlightSearchService>>());
+        _service = new FlightSearchService(
+            [_provider1.Object, _provider2.Object],
+            _validatorMock.Object,
+            Mock.Of<ILogger<FlightSearchService>>());
     }
 
     [Fact]
@@ -58,7 +66,9 @@ public sealed class FlightSearchServiceTests
     [Fact]
     public async Task Search_NoProviders_ReturnsEmptyList()
     {
-        var emptyService = new FlightSearchService([], Mock.Of<ILogger<FlightSearchService>>());
+        var passValidator = new Mock<IValidator<FlightSearchRequest>>();
+        passValidator.Setup(v => v.Validate(It.IsAny<FlightSearchRequest>())).Returns(new ValidationResult());
+        var emptyService = new FlightSearchService([], passValidator.Object, Mock.Of<ILogger<FlightSearchService>>());
         var request = CreateValidRequest();
 
         var result = await emptyService.Search(request);

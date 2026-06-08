@@ -1,32 +1,32 @@
 @SkyRoute_HostAddress = http://localhost:5133
 
 ### Search 1 — COR→MDZ today (10 flights across both providers)
-GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=COR&destinationAirportCode=MDZ&departureDate={{$datetime "yyyy-MM-dd"}}&passengers=1&cabinClass=Economy&timeZone=America/Argentina/Cordoba
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=COR&destinationAirportCode=MDZ&departureDate={{$datetime 'yyyy-MM-dd'}}&passengers=1&cabinClass=Economy&timeZone=America/Argentina/Cordoba
 
 ###
 
 ### Search 2 — EZE→GRU tomorrow (4 flights, 2 per provider)
-GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate={{$datetime "yyyy-MM-dd" 1 d}}&passengers=1&cabinClass=Economy&timeZone=UTC
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate={{$datetime 'yyyy-MM-dd' 1 d}}&passengers=1&cabinClass=Economy&timeZone=UTC
 
 ###
 
 ### Search 3 — GRU→EZE tomorrow (4 flights, 2 per provider)
-GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=GRU&destinationAirportCode=EZE&departureDate={{$datetime "yyyy-MM-dd" 1 d}}&passengers=1&cabinClass=Economy&timeZone=UTC
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=GRU&destinationAirportCode=EZE&departureDate={{$datetime 'yyyy-MM-dd' 1 d}}&passengers=1&cabinClass=Economy&timeZone=UTC
 
 ###
 
 ### Search 4 — EZE→SCL in 3 days (3 flights)
-GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=SCL&departureDate={{$datetime "yyyy-MM-dd" 3 d}}&passengers=2&cabinClass=Economy&timeZone=UTC
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=SCL&departureDate={{$datetime 'yyyy-MM-dd' 3 d}}&passengers=2&cabinClass=Economy&timeZone=UTC
 
 ###
 
 ### Search 5 — EZE→COR today (1 flight)
-GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=COR&departureDate={{$datetime "yyyy-MM-dd"}}&passengers=1&cabinClass=Economy&timeZone=UTC
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=COR&departureDate={{$datetime 'yyyy-MM-dd'}}&passengers=1&cabinClass=Economy&timeZone=UTC
 
 ###
 
 ### Search 6 — Unknown route (empty)
-GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=AEP&destinationAirportCode=LIM&departureDate={{$datetime "yyyy-MM-dd"}}&passengers=1&cabinClass=Economy&timeZone=UTC
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=AEP&destinationAirportCode=LIM&departureDate={{$datetime 'yyyy-MM-dd'}}&passengers=1&cabinClass=Economy&timeZone=UTC
 
 ###
 
@@ -36,12 +36,12 @@ GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=COR&destinationAirpor
 ###
 
 ### Search 8 — Same airport (400)
-GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=EZE&departureDate={{$datetime "yyyy-MM-dd"}}&passengers=1&cabinClass=Economy&timeZone=UTC
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=EZE&departureDate={{$datetime 'yyyy-MM-dd'}}&passengers=1&cabinClass=Economy&timeZone=UTC
 
 ###
 
 ### Search 9 — Invalid timezone (400)
-GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate={{$datetime "yyyy-MM-dd" 1 d}}&passengers=1&cabinClass=Economy&timeZone=Foo/Bar
+GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=GRU&departureDate={{$datetime 'yyyy-MM-dd' 1 d}}&passengers=1&cabinClass=Economy&timeZone=Foo/Bar
 
 ###
 

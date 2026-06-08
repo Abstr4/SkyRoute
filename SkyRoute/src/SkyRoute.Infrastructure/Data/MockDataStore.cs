@@ -13,6 +13,8 @@ public static class MockDataStore
     public static IReadOnlyList<Flight> GetAllFlights() =>
         [.. BudgetWingsFlights, .. GlobalAirFlights];
 
+    public static IReadOnlyList<Flight> SuperCheapestFlights { get; } = CreateSuperCheapestFlights();
+
     private static IReadOnlyList<Airport> CreateAirports() =>
     [
         new Airport
@@ -449,6 +451,74 @@ public static class MockDataStore
                 ArrivalTime = DateTimeOffset.UtcNow.AddDays(3).Date.AddHours(23).AddMinutes(55),
                 CabinClass = CabinClass.Economy,
                 BaseFare = 175.00m,
+            },
+        ];
+    }
+
+    private static IReadOnlyList<Flight> CreateSuperCheapestFlights()
+    {
+        var a = Airports;
+        return
+        [
+            new Flight
+            {
+                Id = 1,
+                Provider = "SuperCheapest",
+                FlightNumber = "SC101",
+                OriginAirport = a.First(x => x.Code == "EZE"),
+                DestinationAirport = a.First(x => x.Code == "COR"),
+                DepartureTime = DateTimeOffset.UtcNow.Date.AddHours(6).AddMinutes(40),
+                ArrivalTime = DateTimeOffset.UtcNow.Date.AddHours(8).AddMinutes(10),
+                CabinClass = CabinClass.Economy,
+                BaseFare = 64.40m,
+            },
+            new Flight
+            {
+                Id = 2,
+                Provider = "SuperCheapest",
+                FlightNumber = "SC202",
+                OriginAirport = a.First(x => x.Code == "EZE"),
+                DestinationAirport = a.First(x => x.Code == "GRU"),
+                DepartureTime = DateTimeOffset.UtcNow.AddDays(1).Date.AddHours(7).AddMinutes(0),
+                ArrivalTime = DateTimeOffset.UtcNow.AddDays(1).Date.AddHours(10).AddMinutes(15),
+                CabinClass = CabinClass.Economy,
+                BaseFare = 120.00m,
+            },
+            new Flight
+            {
+                Id = 3,
+                Provider = "SuperCheapest",
+                FlightNumber = "SC303",
+                OriginAirport = a.First(x => x.Code == "GRU"),
+                DestinationAirport = a.First(x => x.Code == "GIG"),
+                DepartureTime = DateTimeOffset.UtcNow.Date.AddHours(6).AddMinutes(0),
+                ArrivalTime = DateTimeOffset.UtcNow.Date.AddHours(7).AddMinutes(0),
+                CabinClass = CabinClass.Economy,
+                BaseFare = 85.00m,
+            },
+            new Flight
+            {
+                Id = 4,
+                Provider = "SuperCheapest",
+                FlightNumber = "SC404",
+                OriginAirport = a.First(x => x.Code == "COR"),
+                DestinationAirport = a.First(x => x.Code == "MDZ"),
+                DepartureTime = DateTimeOffset.UtcNow.Date.AddHours(8).AddMinutes(0),
+                ArrivalTime = DateTimeOffset.UtcNow.Date.AddHours(9).AddMinutes(0),
+                CabinClass = CabinClass.Economy,
+                BaseFare = 50.00m,
+            },
+            new Flight
+            {
+                Id = 5,
+                Provider = "SuperCheapest",
+                FlightNumber = "SC505",
+                OriginAirport = a.First(x => x.Code == "EZE"),
+                DestinationAirport = a.First(x => x.Code == "SCL"),
+                DepartureTime = DateTimeOffset.UtcNow.AddDays(3).Date.AddHours(18).AddMinutes(10),
+                ArrivalTime = DateTimeOffset.UtcNow.AddDays(3).Date.AddHours(20).AddMinutes(35),
+                CabinClass = CabinClass.Economy,
+                BaseFare = 98.50m,
             },
         ];
     }

@@ -14,6 +14,7 @@ public static class DependencyInjection
 
         services.AddScoped<IFlightProvider, BudgetWingsProvider>();
         services.AddScoped<IFlightProvider, GlobalAirProvider>();
+        services.AddScoped<IFlightProvider, SuperCheapestProvider>();
         services.AddScoped<IBookingRepository, BookingRepository>();
 
         return services;

@@ -4,13 +4,16 @@
     <mat-card-title>SkyRoute</mat-card-title>
     <mat-card-subtitle>Your Ultimate Flight Route Finder</mat-card-subtitle>
   </mat-card-header>
-  <br/>
+  <br />
   <mat-card-content>
     <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="flight-search-form">
       <mat-form-field class="origin-airport-field">
         <mat-label>Origin Airport</mat-label>
         <mat-select formControlName="originAirportCode">
-          @for (airport of AIRPORTS.filter(a => a.code !== searchForm.value.destinationAirportCode); track airport.code) {
+          @for (
+            airport of AIRPORTS.filter((a) => a.code !== searchForm.value.destinationAirportCode);
+            track airport.code
+          ) {
             <mat-option [value]="airport.code">{{ airport.code }} - {{ airport.name }}</mat-option>
           }
         </mat-select>
@@ -18,12 +21,15 @@
       <mat-form-field class="destination-airport-field">
         <mat-label>Destination Airport</mat-label>
         <mat-select formControlName="destinationAirportCode">
-          @for (airport of AIRPORTS.filter(a => a.code !== searchForm.value.originAirportCode); track airport.code) {
+          @for (
+            airport of AIRPORTS.filter((a) => a.code !== searchForm.value.originAirportCode);
+            track airport.code
+          ) {
             <mat-option [value]="airport.code">{{ airport.code }} - {{ airport.name }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
-      <br/>
+      <br />
       <mat-form-field class="departure-date-field">
         <mat-label>Departure Date</mat-label>
         <input

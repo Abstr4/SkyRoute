@@ -20,7 +20,7 @@ Flight search & booking aggregator. Monorepo with two projects:
 
 Backend: 4-layer Clean Architecture — Domain → Application → Infrastructure → API.
 - Provider pattern: `IFlightProvider` (BudgetWings, GlobalAir) registered as scoped services
-- All DI in `Program.cs` (no `DependencyInjection.cs` files exist yet)
+- Each layer has a `DependencyInjection.cs` with `IServiceCollection` extension methods (`AddPresentation()`, `AddInfrastructure()`, `AddApplication()`), called from `Program.cs` via chained calls
 - In-memory data: `MockDataStore` (8 airports AR/BR/CL/PE, 6 BudgetWings + 10 GlobalAir flights)
 - Flight IDs overlap across providers (both use 1..N)
 - Pricing: BudgetWings = `max(baseFare × 0.9, 29.99)`; GlobalAir = `baseFare × 1.15`
