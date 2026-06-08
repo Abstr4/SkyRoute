@@ -13,9 +13,9 @@ public sealed record FlightSearchResponse
 
     public required AirportDto DestinationAirport { get; init; }
 
-    public required DateTime DepartureTime { get; init; }
+    public required DateTimeOffset DepartureTime { get; init; }
 
-    public required DateTime ArrivalTime { get; init; }
+    public required DateTimeOffset ArrivalTime { get; init; }
 
     public required int DurationMinutes { get; init; }
 

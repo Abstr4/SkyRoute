@@ -411,3 +411,4 @@ SkyRoute.UI/.angular/
 SkyRoute.UI/node_modules/
 SkyRoute.UI/dist/
 specs/
+/SkyRoute/.agents/skills/find-skills

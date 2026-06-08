@@ -192,8 +192,8 @@ public sealed class BookingServiceTests
                 Country = dest.Country,
                 CountryCode = dest.CountryCode,
             },
-            DepartureTime = DateTime.UtcNow.AddDays(1),
-            ArrivalTime = DateTime.UtcNow.AddDays(1).AddHours(3),
+            DepartureTime = DateTimeOffset.UtcNow.AddDays(1),
+            ArrivalTime = DateTimeOffset.UtcNow.AddDays(1).AddHours(3),
             CabinClass = CabinClass.Economy,
             PricePerPassenger = price,
         };

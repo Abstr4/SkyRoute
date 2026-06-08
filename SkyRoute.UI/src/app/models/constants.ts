@@ -14,4 +14,6 @@ export const AIRPORTS = [
   { code: 'GRU', name: 'São Paulo, Brazil' },
   { code: 'GIG', name: 'Rio de Janeiro, Brazil' },
   { code: 'SCL', name: 'Santiago, Chile' },
+  { code: 'AEP', name: 'Buenos Aires, Argentina' },
+  { code: 'LIM', name: 'Lima, Peru' },
 ] as const;

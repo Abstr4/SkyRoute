@@ -95,7 +95,7 @@ public sealed class FlightSearchServiceTests
     public void Search_OfferIncludesDuration_CalculatedCorrectly()
     {
         var request = CreateValidRequest();
-        var depart = DateTime.UtcNow.AddDays(1);
+        var depart = DateTimeOffset.UtcNow.AddDays(1);
         var arrive = depart.AddHours(4).AddMinutes(30);
         var offer = new FlightOffer
         {
@@ -148,8 +148,8 @@ public sealed class FlightSearchServiceTests
                 Code = "GRU", Name = "A", City = "São Paulo",
                 Country = "Brazil", CountryCode = "BR",
             },
-            DepartureTime = DateTime.UtcNow.AddDays(1),
-            ArrivalTime = DateTime.UtcNow.AddDays(1).AddHours(3),
+            DepartureTime = DateTimeOffset.UtcNow.AddDays(1),
+            ArrivalTime = DateTimeOffset.UtcNow.AddDays(1).AddHours(3),
             CabinClass = CabinClass.Economy,
             PricePerPassenger = price,
         };

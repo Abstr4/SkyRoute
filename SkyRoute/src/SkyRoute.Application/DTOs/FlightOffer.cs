@@ -12,15 +12,13 @@ public sealed class FlightOffer
 
     public required AirportDto DestinationAirport { get; init; }
 
-    public required DateTime DepartureTime { get; init; }
+    public required DateTimeOffset DepartureTime { get; init; }
 
-    public required DateTime ArrivalTime { get; init; }
+    public required DateTimeOffset ArrivalTime { get; init; }
 
     public required CabinClass CabinClass { get; init; }
 
     public required decimal PricePerPassenger { get; init; }
-
-    public decimal TotalPrice { get; init; }
 
     public int DurationMinutes => (int)(ArrivalTime - DepartureTime).TotalMinutes;
 }

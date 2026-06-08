@@ -104,7 +104,7 @@ public sealed class BookingService : IBookingService
         {
             Id = _bookingsDatabase.Count + 1,
             ReferenceCode = $"SKY-{Guid.NewGuid().ToString()[..6].ToUpper()}",
-            CreatedAtUtc = DateTime.UtcNow,
+            CreatedAtUtc = DateTimeOffset.UtcNow,
             Passengers = domainPassengers,
 
             ProviderName = selectedFlight.Provider,

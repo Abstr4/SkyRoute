@@ -45,6 +45,6 @@ public class BookingController : ControllerBase
         _logger.LogInformation(
             "Booking confirmed: {ReferenceCode}", response.BookingReferenceCode);
 
-        return CreatedAtAction(nameof(CreateBooking), response);
+        return Created(string.Empty, response);
     }
 }

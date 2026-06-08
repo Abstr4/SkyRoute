@@ -20,7 +20,7 @@ GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirpor
 
 ###
 
-### Search 5 — EZE→COR today (1 flight)
+### Search 5 — EZE→COR today (1 flight, time-dependent — BW101 departs 06:40 UTC)
 GET {{SkyRoute_HostAddress}}/api/Flights?originAirportCode=EZE&destinationAirportCode=COR&departureDate={{$datetime 'yyyy-MM-dd'}}&passengers=1&cabinClass=Economy&timeZone=UTC
 
 ###

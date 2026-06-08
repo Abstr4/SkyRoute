@@ -12,9 +12,9 @@ public sealed class Flight
 
     public required Airport DestinationAirport { get; init; }
 
-    public required DateTime DepartureTime { get; init; }
+    public required DateTimeOffset DepartureTime { get; init; }
 
-    public required DateTime ArrivalTime { get; init; }
+    public required DateTimeOffset ArrivalTime { get; init; }
 
     public required CabinClass CabinClass { get; init; }
 

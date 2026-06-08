@@ -32,13 +32,13 @@ public sealed class BookingControllerTests
         {
             Id = 1,
             ReferenceCode = "SKY-ABC123",
-            CreatedAtUtc = DateTime.UtcNow,
+            CreatedAtUtc = DateTimeOffset.UtcNow,
             ProviderName = "BudgetWings",
             FlightNumber = "BW101",
             OriginAirportCode = "EZE",
             DestinationAirportCode = "COR",
-            DepartureTime = DateTime.UtcNow,
-            ArrivalTime = DateTime.UtcNow,
+            DepartureTime = DateTimeOffset.UtcNow,
+            ArrivalTime = DateTimeOffset.UtcNow,
             CabinClass = CabinClass.Economy,
             Passengers = [],
             PricePerPassenger = 100m,
@@ -49,7 +49,7 @@ public sealed class BookingControllerTests
 
         var result = _controller.CreateBooking(request);
 
-        var createdResult = Assert.IsType<CreatedAtActionResult>(result);
+        var createdResult = Assert.IsType<CreatedResult>(result);
         Assert.Equal(201, createdResult.StatusCode);
         var response = Assert.IsType<CreateBookingResponse>(createdResult.Value);
         Assert.Equal("SKY-ABC123", response.BookingReferenceCode);

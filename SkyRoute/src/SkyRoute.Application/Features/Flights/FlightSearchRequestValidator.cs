@@ -56,7 +56,7 @@ public sealed class FlightSearchRequestValidator : AbstractValidator<FlightSearc
             var utcEnd = TimeZoneInfo.ConvertTimeToUtc(localEnd, tz);
             return utcEnd > DateTimeOffset.UtcNow;
         }
-        catch
+        catch (TimeZoneNotFoundException)
         {
             return true;
         }
