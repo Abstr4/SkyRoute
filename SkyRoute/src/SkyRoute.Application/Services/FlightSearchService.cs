@@ -23,9 +23,9 @@ public sealed class FlightSearchService : IFlightSearchService
         _logger = logger;
     }
 
-    public async Task<Result<IReadOnlyList<FlightSearchResponse>>> SearchAsync(FlightSearchRequest request)
+    public async Task<Result<IReadOnlyList<FlightSearchResponse>>> SearchAsync(FlightSearchRequest request, CancellationToken cancellationToken = default)
     {
-        var validation = await _validator.ValidateAsync(request);
+        var validation = await _validator.ValidateAsync(request, cancellationToken);
 
         if (!validation.IsValid)
             return Result<IReadOnlyList<FlightSearchResponse>>.Failure(
@@ -37,7 +37,7 @@ public sealed class FlightSearchService : IFlightSearchService
         var utcStart = TimeZoneInfo.ConvertTimeToUtc(localStart, tz);
         var utcEnd = TimeZoneInfo.ConvertTimeToUtc(localEnd, tz);
 
-        var tasks = _providers.Select(p => p.SearchAsync(request, utcStart, utcEnd));
+        var tasks = _providers.Select(p => p.SearchAsync(request, utcStart, utcEnd, cancellationToken));
         var results = await Task.WhenAll(tasks);
         var offers = results.SelectMany(r => r).ToList();
 

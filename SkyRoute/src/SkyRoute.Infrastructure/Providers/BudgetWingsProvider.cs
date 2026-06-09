@@ -21,7 +21,7 @@ public sealed class BudgetWingsProvider : IFlightProvider
 
     public string ProviderName => "BudgetWings";
 
-    public async Task<IReadOnlyCollection<FlightOffer>> SearchAsync(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
+    public async Task<IReadOnlyCollection<FlightOffer>> SearchAsync(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd, CancellationToken cancellationToken = default)
     {
         var flights = await _dbContext.Flights
             .Include(f => f.OriginAirport)
@@ -32,7 +32,7 @@ public sealed class BudgetWingsProvider : IFlightProvider
                      && f.DepartureTime >= utcStart
                      && f.DepartureTime < utcEnd
                      && f.DepartureTime > DateTimeOffset.UtcNow)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var results = flights.Select(f => new FlightOffer
         {
@@ -53,12 +53,12 @@ public sealed class BudgetWingsProvider : IFlightProvider
         return results;
     }
 
-    public async Task<FlightOffer?> GetByFlightNumberAsync(string flightNumber)
+    public async Task<FlightOffer?> GetByFlightNumberAsync(string flightNumber, CancellationToken cancellationToken = default)
     {
         var flight = await _dbContext.Flights
             .Include(f => f.OriginAirport)
             .Include(f => f.DestinationAirport)
-            .FirstOrDefaultAsync(f => f.Provider == "BudgetWings" && f.FlightNumber == flightNumber);
+            .FirstOrDefaultAsync(f => f.Provider == "BudgetWings" && f.FlightNumber == flightNumber, cancellationToken);
 
         if (flight is null)
         {

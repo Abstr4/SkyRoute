@@ -44,10 +44,10 @@ public sealed class BookingControllerTests
             PricePerPassenger = 100m,
             TotalPrice = 100m,
         };
-        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request))
+        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<Booking>.Success(booking));
 
-        var result = await _controller.CreateBooking(request);
+        var result = await _controller.CreateBooking(request, default);
 
         var createdResult = Assert.IsType<CreatedResult>(result);
         Assert.Equal(201, createdResult.StatusCode);
@@ -59,10 +59,10 @@ public sealed class BookingControllerTests
     public async Task CreateBooking_FlightNotFound_Returns400WithError()
     {
         var request = new CreateBookingRequest("BudgetWings", "BW101", []);
-        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request))
+        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<Booking>.Failure("Flight BW101 from BudgetWings is no longer available."));
 
-        var result = await _controller.CreateBooking(request);
+        var result = await _controller.CreateBooking(request, default);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequest.StatusCode);
@@ -75,10 +75,10 @@ public sealed class BookingControllerTests
         {
             new("Jane Doe", "jane@test.com", DocumentType.NationalId, "12345678"),
         });
-        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request))
+        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<Booking>.Failure("must provide a Passport Number"));
 
-        var result = await _controller.CreateBooking(request);
+        var result = await _controller.CreateBooking(request, default);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequest.StatusCode);
@@ -91,10 +91,10 @@ public sealed class BookingControllerTests
         {
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
         });
-        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request))
+        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<Booking>.Failure("Invalid request."));
 
-        var result = await _controller.CreateBooking(request);
+        var result = await _controller.CreateBooking(request, default);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequest.StatusCode);

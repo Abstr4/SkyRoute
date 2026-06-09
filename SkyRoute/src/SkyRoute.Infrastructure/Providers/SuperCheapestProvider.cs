@@ -20,7 +20,7 @@ public sealed class SuperCheapestProvider : IFlightProvider
 
     public string ProviderName => "SuperCheapest";
 
-    public async Task<IReadOnlyCollection<FlightOffer>> SearchAsync(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
+    public async Task<IReadOnlyCollection<FlightOffer>> SearchAsync(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd, CancellationToken cancellationToken = default)
     {
         var flights = await _dbContext.Flights
             .Include(f => f.OriginAirport)
@@ -31,7 +31,7 @@ public sealed class SuperCheapestProvider : IFlightProvider
                      && f.DepartureTime >= utcStart
                      && f.DepartureTime < utcEnd
                      && f.DepartureTime > DateTimeOffset.UtcNow)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var results = flights.Select(f => new FlightOffer
         {
@@ -52,12 +52,12 @@ public sealed class SuperCheapestProvider : IFlightProvider
         return results;
     }
 
-    public async Task<FlightOffer?> GetByFlightNumberAsync(string flightNumber)
+    public async Task<FlightOffer?> GetByFlightNumberAsync(string flightNumber, CancellationToken cancellationToken = default)
     {
         var flight = await _dbContext.Flights
             .Include(f => f.OriginAirport)
             .Include(f => f.DestinationAirport)
-            .FirstOrDefaultAsync(f => f.Provider == "SuperCheapest" && f.FlightNumber == flightNumber);
+            .FirstOrDefaultAsync(f => f.Provider == "SuperCheapest" && f.FlightNumber == flightNumber, cancellationToken);
 
         if (flight is null)
         {

@@ -24,14 +24,14 @@ namespace SkyRoute.API.Controllers
         [ProducesResponseType(typeof(IEnumerable<FlightSearchResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> SearchFlights([FromQuery] FlightSearchRequest request)
+        public async Task<IActionResult> SearchFlights([FromQuery] FlightSearchRequest request, CancellationToken cancellationToken)
         {
             _logger.LogInformation(
                 "Flight search requested: {Origin} -> {Destination} on {Date}, {Passengers} passenger(s)",
                 request.OriginAirportCode, request.DestinationAirportCode,
                 request.DepartureDate, request.Passengers);
 
-            var result = await _flightSearchService.SearchAsync(request);
+            var result = await _flightSearchService.SearchAsync(request, cancellationToken);
             if (result.IsFailure)
             {
                 _logger.LogWarning(

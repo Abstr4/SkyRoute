@@ -27,9 +27,9 @@ public sealed class BookingService : IBookingService
         _logger = logger;
     }
 
-    public async Task<Result<Booking>> ConfirmBookingAsync(CreateBookingRequest request)
+    public async Task<Result<Booking>> ConfirmBookingAsync(CreateBookingRequest request, CancellationToken cancellationToken = default)
     {
-        var validation = await _validator.ValidateAsync(request);
+        var validation = await _validator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
             return Result<Booking>.Failure(validation.Errors.Select(e => e.ErrorMessage));
 
@@ -45,7 +45,7 @@ public sealed class BookingService : IBookingService
             return Result<Booking>.Failure("Invalid Provider.");
         }
 
-        var selectedFlight = await provider.GetByFlightNumberAsync(request.FlightNumber);
+        var selectedFlight = await provider.GetByFlightNumberAsync(request.FlightNumber, cancellationToken);
         if (selectedFlight is null)
         {
             _logger.LogWarning(
@@ -98,7 +98,7 @@ public sealed class BookingService : IBookingService
             TotalPrice = selectedFlight.PricePerPassenger * domainPassengers.Count
         };
 
-        await _bookingRepository.AddAsync(booking);
+        await _bookingRepository.AddAsync(booking, cancellationToken);
 
         _logger.LogInformation(
             "Booking confirmed: {ReferenceCode} for {Provider} flight {FlightNumber}",

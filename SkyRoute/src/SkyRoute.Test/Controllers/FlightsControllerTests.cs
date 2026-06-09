@@ -50,10 +50,10 @@ public sealed class FlightsControllerTests
                 PricePerPassenger = 100m, TotalPrice = 100m,
             },
         };
-        _searchServiceMock.Setup(s => s.SearchAsync(request))
+        _searchServiceMock.Setup(s => s.SearchAsync(request, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<FlightSearchResponse>>.Success(expected));
 
-        var result = await _controller.SearchFlights(request);
+        var result = await _controller.SearchFlights(request, default);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var results = Assert.IsAssignableFrom<IReadOnlyList<FlightSearchResponse>>(okResult.Value);
@@ -67,10 +67,10 @@ public sealed class FlightsControllerTests
             "EZE", "GRU",
             DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
             1, CabinClass.Economy, "UTC");
-        _searchServiceMock.Setup(s => s.SearchAsync(request))
+        _searchServiceMock.Setup(s => s.SearchAsync(request, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<FlightSearchResponse>>.Failure("Invalid timezone."));
 
-        var result = await _controller.SearchFlights(request);
+        var result = await _controller.SearchFlights(request, default);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequest.StatusCode);

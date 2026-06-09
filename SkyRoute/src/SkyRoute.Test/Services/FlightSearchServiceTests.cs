@@ -24,9 +24,9 @@ public sealed class FlightSearchServiceTests
         _provider2 = new Mock<IFlightProvider>();
         _validatorMock = new Mock<IValidator<FlightSearchRequest>>();
 
-        _provider1.Setup(p => p.SearchAsync(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([]);
-        _provider2.Setup(p => p.SearchAsync(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([]);
-        _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<FlightSearchRequest>())).ReturnsAsync(new ValidationResult());
+        _provider1.Setup(p => p.SearchAsync(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _provider2.Setup(p => p.SearchAsync(It.IsAny<FlightSearchRequest>(), It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<FlightSearchRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(new ValidationResult());
 
         _service = new FlightSearchService(
             [_provider1.Object, _provider2.Object],
@@ -38,8 +38,8 @@ public sealed class FlightSearchServiceTests
     public async Task Search_MultipleProviders_AggregatesAllOffers()
     {
         var request = CreateValidRequest();
-        _provider1.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([CreateOffer("BW101", "BudgetWings")]);
-        _provider2.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([CreateOffer("GA102", "GlobalAir")]);
+        _provider1.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>())).ReturnsAsync([CreateOffer("BW101", "BudgetWings")]);
+        _provider2.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>())).ReturnsAsync([CreateOffer("GA102", "GlobalAir")]);
 
         var result = await _service.SearchAsync(request);
 
@@ -53,7 +53,7 @@ public sealed class FlightSearchServiceTests
     public async Task Search_ValidRequest_CalculatesTotalPrice()
     {
         var request = CreateValidRequest(passengers: 3);
-        _provider1.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([CreateOffer("BW101", "BudgetWings", 100m)]);
+        _provider1.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>())).ReturnsAsync([CreateOffer("BW101", "BudgetWings", 100m)]);
 
         var result = await _service.SearchAsync(request);
 
@@ -67,7 +67,7 @@ public sealed class FlightSearchServiceTests
     public async Task Search_NoProviders_ReturnsEmptyList()
     {
         var passValidator = new Mock<IValidator<FlightSearchRequest>>();
-        passValidator.Setup(v => v.ValidateAsync(It.IsAny<FlightSearchRequest>())).ReturnsAsync(new ValidationResult());
+        passValidator.Setup(v => v.ValidateAsync(It.IsAny<FlightSearchRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(new ValidationResult());
         var emptyService = new FlightSearchService([], passValidator.Object, Mock.Of<ILogger<FlightSearchService>>());
         var request = CreateValidRequest();
 
@@ -81,8 +81,8 @@ public sealed class FlightSearchServiceTests
     public async Task Search_SomeProviderReturnsEmpty_StillAggregatesOthers()
     {
         var request = CreateValidRequest();
-        _provider1.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([]);
-        _provider2.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([CreateOffer("GA102", "GlobalAir")]);
+        _provider1.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _provider2.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>())).ReturnsAsync([CreateOffer("GA102", "GlobalAir")]);
 
         var result = await _service.SearchAsync(request);
 
@@ -114,7 +114,7 @@ public sealed class FlightSearchServiceTests
             CabinClass = CabinClass.Economy,
             PricePerPassenger = 100m,
         };
-        _provider1.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>())).ReturnsAsync([offer]);
+        _provider1.Setup(p => p.SearchAsync(request, It.IsAny<DateTimeOffset>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>())).ReturnsAsync([offer]);
 
         var result = await _service.SearchAsync(request);
 

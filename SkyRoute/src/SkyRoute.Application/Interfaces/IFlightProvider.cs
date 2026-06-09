@@ -7,7 +7,7 @@ public interface IFlightProvider
 {
     string ProviderName { get; }
 
-    Task<IReadOnlyCollection<FlightOffer>> SearchAsync(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd);
+    Task<IReadOnlyCollection<FlightOffer>> SearchAsync(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd, CancellationToken cancellationToken = default);
 
-    Task<FlightOffer?> GetByFlightNumberAsync(string flightNumber);
+    Task<FlightOffer?> GetByFlightNumberAsync(string flightNumber, CancellationToken cancellationToken = default);
 }

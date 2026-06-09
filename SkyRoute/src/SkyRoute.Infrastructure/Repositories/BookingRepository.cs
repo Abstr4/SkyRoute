@@ -14,9 +14,9 @@ public sealed class BookingRepository : IBookingRepository
         _dbContext = dbContext;
     }
 
-    public async Task AddAsync(Booking booking)
+    public async Task AddAsync(Booking booking, CancellationToken cancellationToken = default)
     {
         _dbContext.Bookings.Add(booking);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

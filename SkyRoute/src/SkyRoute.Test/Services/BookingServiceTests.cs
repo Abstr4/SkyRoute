@@ -24,7 +24,7 @@ public sealed class BookingServiceTests
         _providerMock.Setup(p => p.ProviderName).Returns("BudgetWings");
 
         _validatorMock = new Mock<IValidator<CreateBookingRequest>>();
-        _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<CreateBookingRequest>())).ReturnsAsync(new ValidationResult());
+        _validatorMock.Setup(v => v.ValidateAsync(It.IsAny<CreateBookingRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(new ValidationResult());
 
         _repoMock = new Mock<IBookingRepository>();
 
@@ -53,7 +53,7 @@ public sealed class BookingServiceTests
     public async Task ConfirmBooking_DomesticRoute_NationalIdRequired_Succeeds()
     {
         var offer = CreateOffer("EZE", "COR");
-        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101")).ReturnsAsync(offer);
+        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101", It.IsAny<CancellationToken>())).ReturnsAsync(offer);
         var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
@@ -70,7 +70,7 @@ public sealed class BookingServiceTests
     public async Task ConfirmBooking_InternationalRoute_PassportRequired_Succeeds()
     {
         var offer = CreateOffer("EZE", "GRU");
-        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101")).ReturnsAsync(offer);
+        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101", It.IsAny<CancellationToken>())).ReturnsAsync(offer);
         var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("Jane Doe", "jane@test.com", DocumentType.Passport, "AB123456"),
@@ -86,7 +86,7 @@ public sealed class BookingServiceTests
     public async Task ConfirmBooking_InternationalRouteWithNationalId_ReturnsFailure()
     {
         var offer = CreateOffer("EZE", "GRU");
-        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101")).ReturnsAsync(offer);
+        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101", It.IsAny<CancellationToken>())).ReturnsAsync(offer);
         var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("Jane Doe", "jane@test.com", DocumentType.NationalId, "12345678"),
@@ -102,7 +102,7 @@ public sealed class BookingServiceTests
     public async Task ConfirmBooking_DomesticRouteWithPassport_ReturnsFailure()
     {
         var offer = CreateOffer("EZE", "COR");
-        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101")).ReturnsAsync(offer);
+        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101", It.IsAny<CancellationToken>())).ReturnsAsync(offer);
         var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("John Doe", "john@test.com", DocumentType.Passport, "AB123456"),
@@ -118,7 +118,7 @@ public sealed class BookingServiceTests
     public async Task ConfirmBooking_ValidRequest_SetsCorrectPricing()
     {
         var offer = CreateOffer("EZE", "COR", 150m);
-        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101")).ReturnsAsync(offer);
+        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101", It.IsAny<CancellationToken>())).ReturnsAsync(offer);
         var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
@@ -136,7 +136,7 @@ public sealed class BookingServiceTests
     public async Task ConfirmBooking_ValidRequest_SetsFlightSnapshotFields()
     {
         var offer = CreateOffer("EZE", "COR", 100m);
-        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101")).ReturnsAsync(offer);
+        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101", It.IsAny<CancellationToken>())).ReturnsAsync(offer);
         var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
@@ -158,7 +158,7 @@ public sealed class BookingServiceTests
     public async Task ConfirmBooking_ValidRouteAndDocument_Succeeds(string origin, string dest, DocumentType docType)
     {
         var offer = CreateOffer(origin, dest);
-        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101")).ReturnsAsync(offer);
+        _providerMock.Setup(p => p.GetByFlightNumberAsync("BW101", It.IsAny<CancellationToken>())).ReturnsAsync(offer);
         var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("Test Passenger", "test@test.com", docType, "12345678"),
