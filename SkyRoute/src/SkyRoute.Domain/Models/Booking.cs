@@ -2,20 +2,20 @@ namespace SkyRoute.Domain.Models;
 
 public sealed class Booking
 {
-    public required int Id { get; set; }
-    public required string ReferenceCode { get; init; }
-    public required DateTimeOffset CreatedAtUtc { get; init; }
+    public int Id { get; set; }
+    public string ReferenceCode { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAtUtc { get; set; }
 
-    public required string ProviderName { get; init; }
-    public required string FlightNumber { get; init; }
-    public required string OriginAirportCode { get; init; }
-    public required string DestinationAirportCode { get; init; }
-    public required DateTimeOffset DepartureTime { get; init; }
-    public required DateTimeOffset ArrivalTime { get; init; }
-    public required CabinClass CabinClass { get; init; }
+    public string ProviderName { get; set; } = string.Empty;
+    public string FlightNumber { get; set; } = string.Empty;
+    public string OriginAirportCode { get; set; } = string.Empty;
+    public string DestinationAirportCode { get; set; } = string.Empty;
+    public DateTimeOffset DepartureTime { get; set; }
+    public DateTimeOffset ArrivalTime { get; set; }
+    public CabinClass CabinClass { get; set; }
 
-    public required IReadOnlyCollection<Passenger> Passengers { get; init; }
+    public List<Passenger> Passengers { get; set; } = [];
 
-    public required decimal PricePerPassenger { get; init; }
-    public required decimal TotalPrice { get; init; }
+    public decimal PricePerPassenger { get; set; }
+    public decimal TotalPrice { get; set; }
 }

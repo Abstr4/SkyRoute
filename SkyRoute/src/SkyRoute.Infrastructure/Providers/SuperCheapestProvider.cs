@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Flights;
@@ -8,35 +9,41 @@ namespace SkyRoute.Infrastructure.Providers;
 
 public sealed class SuperCheapestProvider : IFlightProvider
 {
+    private readonly SkyRouteDbContext _dbContext;
     private readonly ILogger<SuperCheapestProvider> _logger;
 
-    public SuperCheapestProvider(ILogger<SuperCheapestProvider> logger)
+    public SuperCheapestProvider(SkyRouteDbContext dbContext, ILogger<SuperCheapestProvider> logger)
     {
+        _dbContext = dbContext;
         _logger = logger;
     }
 
     public string ProviderName => "SuperCheapest";
 
-    public IReadOnlyCollection<FlightOffer> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
+    public async Task<IReadOnlyCollection<FlightOffer>> SearchAsync(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
     {
-        var results = MockDataStore.SuperCheapestFlights
-            .Where(f => f.OriginAirport.Code == request.OriginAirportCode
+        var flights = await _dbContext.Flights
+            .Include(f => f.OriginAirport)
+            .Include(f => f.DestinationAirport)
+            .Where(f => f.Provider == "SuperCheapest"
+                     && f.OriginAirport.Code == request.OriginAirportCode
                      && f.DestinationAirport.Code == request.DestinationAirportCode
                      && f.DepartureTime >= utcStart
                      && f.DepartureTime < utcEnd
                      && f.DepartureTime > DateTimeOffset.UtcNow)
-            .Select(f => new FlightOffer
-            {
-                Provider = f.Provider,
-                FlightNumber = f.FlightNumber,
-                OriginAirport = f.OriginAirport.ToDto(),
-                DestinationAirport = f.DestinationAirport.ToDto(),
-                DepartureTime = f.DepartureTime,
-                ArrivalTime = f.ArrivalTime,
-                CabinClass = f.CabinClass,
-                PricePerPassenger = CalculatePrice(f.BaseFare),
-            })
-            .ToList();
+            .ToListAsync();
+
+        var results = flights.Select(f => new FlightOffer
+        {
+            Provider = f.Provider,
+            FlightNumber = f.FlightNumber,
+            OriginAirport = f.OriginAirport.ToDto(),
+            DestinationAirport = f.DestinationAirport.ToDto(),
+            DepartureTime = f.DepartureTime,
+            ArrivalTime = f.ArrivalTime,
+            CabinClass = f.CabinClass,
+            PricePerPassenger = CalculatePrice(f.BaseFare),
+        }).ToList();
 
         _logger.LogDebug(
             "SuperCheapest search {Origin}->{Destination}: {Count} result(s)",
@@ -45,10 +52,13 @@ public sealed class SuperCheapestProvider : IFlightProvider
         return results;
     }
 
-    public FlightOffer? GetByFlightNumber(string flightNumber)
+    public async Task<FlightOffer?> GetByFlightNumberAsync(string flightNumber)
     {
-        var flight = MockDataStore.SuperCheapestFlights
-            .FirstOrDefault(f => f.FlightNumber == flightNumber);
+        var flight = await _dbContext.Flights
+            .Include(f => f.OriginAirport)
+            .Include(f => f.DestinationAirport)
+            .FirstOrDefaultAsync(f => f.Provider == "SuperCheapest" && f.FlightNumber == flightNumber);
+
         if (flight is null)
         {
             _logger.LogWarning("SuperCheapest flight not found: {FlightNumber}", flightNumber);

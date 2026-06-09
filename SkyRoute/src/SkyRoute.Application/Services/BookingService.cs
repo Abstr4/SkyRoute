@@ -10,25 +10,26 @@ namespace SkyRoute.Application.Services;
 
 public sealed class BookingService : IBookingService
 {
-    private readonly List<Booking> _bookingsDatabase = new();
+    private readonly IBookingRepository _bookingRepository;
     private readonly IEnumerable<IFlightProvider> _providers;
     private readonly IValidator<CreateBookingRequest> _validator;
     private readonly ILogger<BookingService> _logger;
-    private int _passengerId;
 
     public BookingService(
+        IBookingRepository bookingRepository,
         IEnumerable<IFlightProvider> providers,
         IValidator<CreateBookingRequest> validator,
         ILogger<BookingService> logger)
     {
+        _bookingRepository = bookingRepository;
         _providers = providers;
         _validator = validator;
         _logger = logger;
     }
 
-    public Result<Booking> ConfirmBooking(CreateBookingRequest request)
+    public async Task<Result<Booking>> ConfirmBookingAsync(CreateBookingRequest request)
     {
-        var validation = _validator.Validate(request);
+        var validation = await _validator.ValidateAsync(request);
         if (!validation.IsValid)
             return Result<Booking>.Failure(validation.Errors.Select(e => e.ErrorMessage));
 
@@ -44,7 +45,7 @@ public sealed class BookingService : IBookingService
             return Result<Booking>.Failure("Invalid Provider.");
         }
 
-        var selectedFlight = provider.GetByFlightNumber(request.FlightNumber);
+        var selectedFlight = await provider.GetByFlightNumberAsync(request.FlightNumber);
         if (selectedFlight is null)
         {
             _logger.LogWarning(
@@ -72,41 +73,20 @@ public sealed class BookingService : IBookingService
                     $"Passenger '{passenger.FullName}' must provide a National ID for domestic routes.");
             }
 
-            CreatePassenger(domainPassengers, passenger);
+            domainPassengers.Add(new Passenger
+            {
+                FullName = passenger.FullName,
+                Email = passenger.Email,
+                DocumentType = passenger.DocumentType,
+                DocumentNumber = passenger.DocumentNumber
+            });
         }
 
-        Booking flatBooking = CreateBooking(selectedFlight, domainPassengers);
-
-        _bookingsDatabase.Add(flatBooking);
-
-        _logger.LogInformation(
-            "Booking confirmed: {ReferenceCode} for {Provider} flight {FlightNumber}",
-            flatBooking.ReferenceCode, flatBooking.ProviderName, flatBooking.FlightNumber);
-
-        return Result<Booking>.Success(flatBooking);
-    }
-
-    private void CreatePassenger(List<Passenger> domainPassengers, CreatePassengerRequest passenger)
-    {
-        domainPassengers.Add(new Passenger
+        var booking = new Booking
         {
-            Id = _passengerId++,
-            FullName = passenger.FullName,
-            Email = passenger.Email,
-            DocumentType = passenger.DocumentType,
-            DocumentNumber = passenger.DocumentNumber
-        });
-    }
-
-    private Booking CreateBooking(FlightOffer selectedFlight, List<Passenger> domainPassengers)
-    {
-        var flatBooking = new Booking
-        {
-            Id = _bookingsDatabase.Count + 1,
             ReferenceCode = $"SKY-{Guid.NewGuid().ToString()[..6].ToUpper()}",
             CreatedAtUtc = DateTimeOffset.UtcNow,
             Passengers = domainPassengers,
-
             ProviderName = selectedFlight.Provider,
             FlightNumber = selectedFlight.FlightNumber,
             OriginAirportCode = selectedFlight.OriginAirport.Code,
@@ -114,10 +94,16 @@ public sealed class BookingService : IBookingService
             DepartureTime = selectedFlight.DepartureTime,
             ArrivalTime = selectedFlight.ArrivalTime,
             CabinClass = selectedFlight.CabinClass,
-
             PricePerPassenger = selectedFlight.PricePerPassenger,
             TotalPrice = selectedFlight.PricePerPassenger * domainPassengers.Count
         };
-        return flatBooking;
+
+        await _bookingRepository.AddAsync(booking);
+
+        _logger.LogInformation(
+            "Booking confirmed: {ReferenceCode} for {Provider} flight {FlightNumber}",
+            booking.ReferenceCode, booking.ProviderName, booking.FlightNumber);
+
+        return Result<Booking>.Success(booking);
     }
 }

@@ -6,5 +6,5 @@ namespace SkyRoute.Application.Interfaces;
 
 public interface IBookingService
 {
-    Result<Booking> ConfirmBooking(CreateBookingRequest request);
+    Task<Result<Booking>> ConfirmBookingAsync(CreateBookingRequest request);
 }

@@ -2,13 +2,15 @@ namespace SkyRoute.Domain.Models;
 
 public sealed class Passenger
 {
-    public required int Id { get; set; }
+    public int Id { get; set; }
 
-    public required string FullName { get; init; }
+    public int BookingId { get; set; }
 
-    public required string Email { get; init; }
+    public string FullName { get; set; } = string.Empty;
 
-    public required DocumentType DocumentType { get; init; }
+    public string Email { get; set; } = string.Empty;
 
-    public required string DocumentNumber { get; init; }
+    public DocumentType DocumentType { get; set; }
+
+    public string DocumentNumber { get; set; } = string.Empty;
 }

@@ -2,23 +2,27 @@ namespace SkyRoute.Domain.Models;
 
 public sealed class Flight
 {
-    public required int Id { get; init; }
+    public int Id { get; set; }
 
-    public required string Provider { get; init; }
+    public string Provider { get; set; } = string.Empty;
 
-    public required string FlightNumber { get; init; }
+    public string FlightNumber { get; set; } = string.Empty;
 
-    public required Airport OriginAirport { get; init; }
+    public int OriginAirportId { get; set; }
 
-    public required Airport DestinationAirport { get; init; }
+    public Airport OriginAirport { get; set; } = null!;
 
-    public required DateTimeOffset DepartureTime { get; init; }
+    public int DestinationAirportId { get; set; }
 
-    public required DateTimeOffset ArrivalTime { get; init; }
+    public Airport DestinationAirport { get; set; } = null!;
 
-    public required CabinClass CabinClass { get; init; }
+    public DateTimeOffset DepartureTime { get; set; }
 
-    public required decimal BaseFare { get; init; }
+    public DateTimeOffset ArrivalTime { get; set; }
+
+    public CabinClass CabinClass { get; set; }
+
+    public decimal BaseFare { get; set; }
 
     public TimeSpan Duration => ArrivalTime - DepartureTime;
 

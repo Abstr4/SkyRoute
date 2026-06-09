@@ -22,7 +22,7 @@ public sealed class BookingControllerTests
     }
 
     [Fact]
-    public void CreateBooking_ValidDomesticRequest_Returns201WithReferenceCode()
+    public async Task CreateBooking_ValidDomesticRequest_Returns201WithReferenceCode()
     {
         var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
@@ -44,10 +44,10 @@ public sealed class BookingControllerTests
             PricePerPassenger = 100m,
             TotalPrice = 100m,
         };
-        _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
-            .Returns(Result<Booking>.Success(booking));
+        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request))
+            .ReturnsAsync(Result<Booking>.Success(booking));
 
-        var result = _controller.CreateBooking(request);
+        var result = await _controller.CreateBooking(request);
 
         var createdResult = Assert.IsType<CreatedResult>(result);
         Assert.Equal(201, createdResult.StatusCode);
@@ -56,45 +56,45 @@ public sealed class BookingControllerTests
     }
 
     [Fact]
-    public void CreateBooking_FlightNotFound_Returns400WithError()
+    public async Task CreateBooking_FlightNotFound_Returns400WithError()
     {
         var request = new CreateBookingRequest("BudgetWings", "BW101", []);
-        _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
-            .Returns(Result<Booking>.Failure("Flight BW101 from BudgetWings is no longer available."));
+        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request))
+            .ReturnsAsync(Result<Booking>.Failure("Flight BW101 from BudgetWings is no longer available."));
 
-        var result = _controller.CreateBooking(request);
+        var result = await _controller.CreateBooking(request);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequest.StatusCode);
     }
 
     [Fact]
-    public void CreateBooking_InternationalRouteWithNationalId_Returns400WithError()
+    public async Task CreateBooking_InternationalRouteWithNationalId_Returns400WithError()
     {
         var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("Jane Doe", "jane@test.com", DocumentType.NationalId, "12345678"),
         });
-        _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
-            .Returns(Result<Booking>.Failure("must provide a Passport Number"));
+        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request))
+            .ReturnsAsync(Result<Booking>.Failure("must provide a Passport Number"));
 
-        var result = _controller.CreateBooking(request);
+        var result = await _controller.CreateBooking(request);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequest.StatusCode);
     }
 
     [Fact]
-    public void CreateBooking_ValidationFailure_ReturnsBadRequest()
+    public async Task CreateBooking_ValidationFailure_ReturnsBadRequest()
     {
         var request = new CreateBookingRequest("BudgetWings", "BW101", new List<CreatePassengerRequest>
         {
             new("John Doe", "john@test.com", DocumentType.NationalId, "12345678"),
         });
-        _bookingServiceMock.Setup(s => s.ConfirmBooking(request))
-            .Returns(Result<Booking>.Failure("Invalid request."));
+        _bookingServiceMock.Setup(s => s.ConfirmBookingAsync(request))
+            .ReturnsAsync(Result<Booking>.Failure("Invalid request."));
 
-        var result = _controller.CreateBooking(request);
+        var result = await _controller.CreateBooking(request);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequest.StatusCode);

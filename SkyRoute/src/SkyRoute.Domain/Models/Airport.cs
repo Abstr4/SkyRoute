@@ -2,15 +2,15 @@ namespace SkyRoute.Domain.Models;
 
 public sealed class Airport
 {
-    public required int Id { get; set; }
+    public int Id { get; set; }
 
-    public required string Code { get; init; }
+    public string Code { get; set; } = string.Empty;
 
-    public required string Name { get; init; }
+    public string Name { get; set; } = string.Empty;
 
-    public required string City { get; init; }
+    public string City { get; set; } = string.Empty;
 
-    public required string Country { get; init; }
+    public string Country { get; set; } = string.Empty;
 
-    public required string CountryCode { get; init; }
+    public string CountryCode { get; set; } = string.Empty;
 }

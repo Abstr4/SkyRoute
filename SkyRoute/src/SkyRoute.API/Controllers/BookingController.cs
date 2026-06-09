@@ -23,13 +23,13 @@ public class BookingController : ControllerBase
     [ProducesResponseType(typeof(CreateBookingResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult CreateBooking([FromBody] CreateBookingRequest request)
+    public async Task<IActionResult> CreateBooking([FromBody] CreateBookingRequest request)
     {
         _logger.LogInformation(
             "Booking requested: {Provider} flight {FlightNumber}, {Passengers} passenger(s)",
             request.Provider, request.FlightNumber, request.Passengers?.Count ?? 0);
 
-        var result = _bookingService.ConfirmBooking(request);
+        var result = await _bookingService.ConfirmBookingAsync(request);
         if (result.IsFailure)
         {
             _logger.LogWarning(

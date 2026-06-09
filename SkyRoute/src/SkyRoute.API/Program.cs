@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
+using SkyRoute.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,21 @@ builder.Services.AddPresentation()
                 .AddApplication();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<SkyRouteDbContext>();
+    db.Database.EnsureDeleted();
+    db.Database.EnsureCreated();
+
+    var airports = SeedData.CreateAirports();
+    db.Airports.AddRange(airports);
+    db.SaveChanges();
+
+    var flights = SeedData.CreateFlights(airports);
+    db.Flights.AddRange(flights);
+    db.SaveChanges();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

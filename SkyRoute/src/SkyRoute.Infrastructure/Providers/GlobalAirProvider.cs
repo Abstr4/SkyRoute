@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SkyRoute.Application.DTOs;
 using SkyRoute.Application.Features.Flights;
@@ -8,35 +9,41 @@ namespace SkyRoute.Infrastructure.Providers;
 
 public sealed class GlobalAirProvider : IFlightProvider
 {
+    private readonly SkyRouteDbContext _dbContext;
     private readonly ILogger<GlobalAirProvider> _logger;
 
-    public GlobalAirProvider(ILogger<GlobalAirProvider> logger)
+    public GlobalAirProvider(SkyRouteDbContext dbContext, ILogger<GlobalAirProvider> logger)
     {
+        _dbContext = dbContext;
         _logger = logger;
     }
 
     public string ProviderName => "GlobalAir";
 
-    public IReadOnlyCollection<FlightOffer> Search(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
+    public async Task<IReadOnlyCollection<FlightOffer>> SearchAsync(FlightSearchRequest request, DateTimeOffset utcStart, DateTimeOffset utcEnd)
     {
-        var results = MockDataStore.GlobalAirFlights
-            .Where(f => f.OriginAirport.Code == request.OriginAirportCode
+        var flights = await _dbContext.Flights
+            .Include(f => f.OriginAirport)
+            .Include(f => f.DestinationAirport)
+            .Where(f => f.Provider == "GlobalAir"
+                     && f.OriginAirport.Code == request.OriginAirportCode
                      && f.DestinationAirport.Code == request.DestinationAirportCode
                      && f.DepartureTime >= utcStart
                      && f.DepartureTime < utcEnd
                      && f.DepartureTime > DateTimeOffset.UtcNow)
-            .Select(f => new FlightOffer
-            {
-                Provider = f.Provider,
-                FlightNumber = f.FlightNumber,
-                OriginAirport = f.OriginAirport.ToDto(),
-                DestinationAirport = f.DestinationAirport.ToDto(),
-                DepartureTime = f.DepartureTime,
-                ArrivalTime = f.ArrivalTime,
-                CabinClass = f.CabinClass,
-                PricePerPassenger = CalculatePrice(f.BaseFare),
-            })
-            .ToList();
+            .ToListAsync();
+
+        var results = flights.Select(f => new FlightOffer
+        {
+            Provider = f.Provider,
+            FlightNumber = f.FlightNumber,
+            OriginAirport = f.OriginAirport.ToDto(),
+            DestinationAirport = f.DestinationAirport.ToDto(),
+            DepartureTime = f.DepartureTime,
+            ArrivalTime = f.ArrivalTime,
+            CabinClass = f.CabinClass,
+            PricePerPassenger = CalculatePrice(f.BaseFare),
+        }).ToList();
 
         _logger.LogDebug(
             "GlobalAir search {Origin}->{Destination}: {Count} result(s)",
@@ -45,10 +52,13 @@ public sealed class GlobalAirProvider : IFlightProvider
         return results;
     }
 
-    public FlightOffer? GetByFlightNumber(string flightNumber)
+    public async Task<FlightOffer?> GetByFlightNumberAsync(string flightNumber)
     {
-        var flight = MockDataStore.GlobalAirFlights
-            .FirstOrDefault(f => f.FlightNumber == flightNumber);
+        var flight = await _dbContext.Flights
+            .Include(f => f.OriginAirport)
+            .Include(f => f.DestinationAirport)
+            .FirstOrDefaultAsync(f => f.Provider == "GlobalAir" && f.FlightNumber == flightNumber);
+
         if (flight is null)
         {
             _logger.LogWarning("GlobalAir flight not found: {FlightNumber}", flightNumber);

@@ -5,5 +5,5 @@ namespace SkyRoute.Application.Interfaces;
 
 public interface IFlightSearchService
 {
-    Result<IReadOnlyList<FlightSearchResponse>> Search(FlightSearchRequest request);
+    Task<Result<IReadOnlyList<FlightSearchResponse>>> SearchAsync(FlightSearchRequest request);
 }
