@@ -19,7 +19,7 @@ SkyRoute aggregates flight offers from multiple airline providers and lets users
 - **SkyRoute** — a .NET 10 ASP.NET Core Web API (Clean Architecture)
 - **SkyRoute.UI** — an Angular 21 SPA (standalone components, Angular Material, signals)
 
-Flights are served from an in-memory data store with two mock providers (BudgetWings and GlobalAir), each applying their own pricing rules. The frontend provides a three-step flow: search → results → booking, with dynamic document validation based on whether the route is domestic or international.
+Flights are served from an EF Core InMemory database with three mock providers (BudgetWings, GlobalAir, and SuperCheapest), each applying their own pricing rules. The frontend provides a three-step flow: search → results → booking, with dynamic document validation based on whether the route is domestic or international.
 
 ---
 
@@ -79,34 +79,36 @@ SkyRoute.Domain             — models, enums (zero dependencies)
 SkyRoute.Application        — interfaces (ports), services (use cases), DTOs
     ╱              ╲
 SkyRoute.Infrastructure     SkyRoute.API
-(providers, data store)     (controllers, DI composition root)
+(providers, EF Core DbContext) (controllers, DI composition root)
 ```
 
 | Layer | Responsibility |
 |-------|---------------|
 | **Domain** | Core business models (`Airport`, `Flight`, `Booking`, `Passenger`) and enums (`CabinClass`, `DocumentType`). No project dependencies. |
 | **Application** | Service interfaces, use-case implementations, the `IFlightProvider` contract, request/response DTOs. Depends only on Domain. |
-| **Infrastructure** | Concrete provider implementations (`BudgetWingsProvider`, `GlobalAirProvider`), the `MockDataStore`, mappers. Depends only on Application. |
+| **Infrastructure** | Concrete provider implementations (`BudgetWingsProvider`, `GlobalAirProvider`, `SuperCheapestProvider`), the `SkyRouteDbContext` (EF Core InMemory), repositories, mappers. Depends only on Application. |
 | **API** | ASP.NET controllers, DI registration, CORS, middleware. The composition root. |
 
 #### Provider pattern
 
-`IFlightProvider` defines `Search()` and `GetByFlightNumber()`. Each provider registers as a scoped service; `FlightSearchService` receives `IEnumerable<IFlightProvider>` via DI and iterates over all registered providers. Adding a new airline requires only implementing the interface and registering it in `Program.cs`.
+`IFlightProvider` defines `SearchAsync()` and `GetByFlightNumberAsync()`. Each provider registers as a scoped service; `FlightSearchService` receives `IEnumerable<IFlightProvider>` via DI and queries all providers in parallel with `Task.WhenAll`. Adding a new airline requires only implementing the interface and registering it in `DependencyInjection.cs`.
 
 **Pricing rules:**
 
 - **BudgetWings:** `max(baseFare × 0.9, 29.99)` — 10% discount, $29.99 minimum
-- **GlobalAir:** `baseFare × 1.15` — 15% fuel surcharge, 2-decimal rounding
+- **GlobalAir:** `baseFare × 1.15` — 15% fuel surcharge
+- **SuperCheapest:** `baseFare × 0.50` — 50% off everything
 
-#### Mock data
+#### Seed data
 
 | Data | Count |
 |------|-------|
 | Airports | 8 (4 countries) |
 | BudgetWings flights | 14 |
 | GlobalAir flights | 15 |
+| SuperCheapest flights | 5 |
 
-Flights span today, tomorrow, and 3 days ahead across multiple routes. Providers filter departed flights (`DepartureTime > DateTimeOffset.UtcNow`) so expired flights are never returned.
+Flights are seeded on every app startup with dynamic dates (today, tomorrow, and 3 days ahead). The InMemory database is deleted and re-created each time the process starts, ensuring times are always relative to the current day. Providers filter departed flights (`DepartureTime > DateTimeOffset.UtcNow`) so expired flights are never returned.
 
 ### Frontend — Component tree and data flow
 
@@ -138,6 +140,7 @@ App (router-outlet)
 | **Result pattern + global exception handler** | `Result<T>` return types keep expected failures (validation, not-found) explicit in the domain layer rather than throwing exceptions for control flow. The `GlobalExceptionHandler` catches remaining unexpected exceptions and returns structured `application/problem+json` responses. |
 | **`IExceptionHandler` over custom middleware** | Uses the built-in `IExceptionHandler` API registered via `AddExceptionHandler<T>()` instead of a custom middleware pipeline — produces `ProblemDetails` out of the box, aligning with RFC 9457 problem response conventions. |
 | **Scalar over Swagger** | A more modern, readable API reference UI with minimal configuration via `Scalar.AspNetCore`. |
+| **EF Core InMemory + async/await** | Data access uses EF Core InMemory with `async`/`await` throughout the entire chain (controllers → services → providers → DbContext). Provider queries run in parallel via `Task.WhenAll`. The in-memory database is deleted and re-seeded on every startup, guaranteeing fresh dates. Seeding uses `db.Database.EnsureDeleted()` + `EnsureCreated()` to avoid stale state between restarts. |
 
 ---
 
@@ -148,10 +151,9 @@ App (router-outlet)
 - **`timeZone` is required** — The search endpoint requires an IANA timezone. The frontend sends `Intl.DateTimeFormat().resolvedOptions().timeZone` automatically; manual API callers must include one.
 - **Booking state lost on refresh** — Router state on `/booking` doesn't survive a page refresh. Navigating to `/booking` directly redirects home.
 - **Hardcoded API URL** — The frontend uses `https://localhost:7229` in all environments. No per-environment switching.
-- **Backend state is ephemeral** — Bookings are stored in a private `List<Booking>` inside `BookingService` and are lost on server restart.
+- **Backend state is ephemeral** — Bookings are persisted via EF Core InMemory (`SkyRouteDbContext.Bookings`) during the app's lifetime but are lost on server restart, as the database is deleted and re-seeded at every startup.
 - **CORS restricted to `localhost:4200`** — Hardcoded for the Angular dev server. Any other client must be added explicitly.
 - **Logging in controllers, not filters** — `ILogger<T>` is injected directly into controllers. Extracting cross-cutting concerns into action filters (or a CQRS pipeline with behaviors) would be cleaner.
-- **No async I/O** — All data is served from a static in-memory `MockDataStore`; there are no `async` code paths. A separate branch is in progress to replace it with EF Core InMemory and true async operations.
 
 ---
 
@@ -162,7 +164,7 @@ App (router-outlet)
 │   └── src/
 │       ├── SkyRoute.Domain/      # Models, enums (zero deps)
 │       ├── SkyRoute.Application/ # Interfaces, services, DTOs
-│       ├── SkyRoute.Infrastructure/ # Providers, data store, mappers
+│       ├── SkyRoute.Infrastructure/ # Providers, EF Core DbContext, repositories, mappers
 │       ├── SkyRoute.API/         # Controllers, Program.cs, DI
 │       └── SkyRoute.Test/        # xUnit + Moq unit tests
 ├── SkyRoute.UI/                  # Angular 21 frontend
