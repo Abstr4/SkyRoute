@@ -77,9 +77,10 @@ The [SkyRoute.http](SkyRoute/src/SkyRoute.API/SkyRoute.http) file contains a com
 SkyRoute.Domain             — models, enums (zero dependencies)
        │
 SkyRoute.Application        — interfaces (ports), services (use cases), DTOs
-    ╱              ╲
-SkyRoute.Infrastructure     SkyRoute.API
-(providers, EF Core DbContext) (controllers, DI composition root)
+    ╱              ╲_____________
+   ╱                             ╲
+SkyRoute.Infrastructure          SkyRoute.API
+(providers, EF Core DbContext)  (controllers, DI composition root)
 ```
 
 | Layer | Responsibility |
