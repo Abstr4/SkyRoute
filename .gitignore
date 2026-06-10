@@ -412,3 +412,6 @@ SkyRoute.UI/node_modules/
 SkyRoute.UI/dist/
 specs/
 /SkyRoute/.agents/skills/find-skills
+docs/
+extra-production-polish.md
+filling-gaps.md
